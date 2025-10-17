@@ -1,4 +1,4 @@
-# Game Design Document: Aetherium Nexus
+# Game Design Document: Neocity
 
 **Version:** 0.1
 **Date:** 2025-10-15
@@ -8,7 +8,7 @@
 ## 1. Overview
 
 ### 1.1. Game Title
-**Aetherium Nexus**
+**NEOCITY**
 
 ### 1.2. Logline
 A cybertech-inspired multiverse social platform where users exist as customizable digital beings. Players can socialize, customize their avatars, build personal spaces, earn a digital currency, and compete in neon-soaked mini-games within a sprawling, persistent metropolis.
@@ -26,7 +26,7 @@ Players who enjoy social MMOs, creative sandbox games (like VRChat, Second Life)
 ## 2. World & Aesthetic
 
 ### 2.1. Premise
-In the distant future, humanity has created the **Aetherium Nexus**, a digital multiverse where consciousness can be uploaded. The central hub is **"The Grid,"** a vast, ever-expanding city characterized by a perpetual twilight, rain-slicked streets, and a constant shimmer of floating data particles.
+In the distant future, humanity has created the **Neocity**, a digital multiverse where consciousness can be uploaded. The central hub is **"The Grid,"** a vast, ever-expanding city characterized by a perpetual twilight, rain-slicked streets, and a constant shimmer of floating data particles.
 
 ### 2.2. Visual Theme
 *   **Color Palette:** Dominated by dark themes, with navy blue, deep grays, and black as the base.
@@ -72,11 +72,6 @@ Instanced, competitive games accessed via portals in The Grid.
 
 ## 4. Monetization Strategy (Optional)
 *   **Primary:** Direct purchase of cosmetic items that do not affect gameplay. This includes exclusive Echo parts, legendary Auras, and premium Data-Den decorations.
-*   **Secondary:** A "Nexus Pass" (Battle Pass system) where players can complete challenges to unlock tiers of rewards, with a premium track offering more exclusive items.
-
+  
 ---
 
-## 5. Next Steps
-*   Create a repository for the project.
-*   Develop prototype mechanics for core systems (Character Customization, Player Movement).
-*   Design and model initial art assets for a "Blockout" version of a small section of The Grid.
