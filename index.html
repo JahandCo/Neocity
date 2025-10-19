@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEOCITY</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen">
+        <div class="login-container">
+            <h1 class="game-title">NEOCITY</h1>
+            <p class="logline">A cybertech-inspired multiverse social platform.</p>
+            <button id="enter-grid-btn">Enter The Grid</button>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <!-- Main application interface will go here -->
+        <header>
+            <div class="header-left">
+                <span class="currency">CHROMA: 0</span>
+            </div>
+            <div class="header-right">
+                <button class="nav-btn">Echo</button>
+                <button class="nav-btn">Syndicate</button>
+                <button class="nav-btn">Data-Den</button>
+            </div>
+        </header>
+
+        <main id="main-hub">
+            <h2>The Grid</h2>
+            <p>Welcome, Echo. The digital world awaits.</p>
+            <!-- Sim-Chambers (Mini-Games) access points -->
+            <div id="sim-chambers">
+                <h3>Sim-Chambers</h3>
+                <div class="game-list">
+                    <div class="game-card">Grav-Ball</div>
+                    <div class="game-card">Data Heist</div>
+                    <div class="game-card">Synth-Racer</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
