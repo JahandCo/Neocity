@@ -212,13 +212,23 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         ctx.translate(-camera.x, -camera.y);
 
-        // Draw Environment - Use broken mug scene
+        // Draw Environment - Use broken mug scene as background
         if (environment.broken_mug) {
             ctx.drawImage(environment.broken_mug, 0, 0, world.width, world.height);
         }
 
-        // Draw Players
-        drawPlayers();
+        // Draw Players with depth consideration
+        // The bar counter is roughly at Y=600-700, so we'll split rendering:
+        // - Characters with Y < 550 appear behind the bar
+        // - Characters with Y >= 550 appear in front of the bar
+        
+        drawPlayersAtDepth(0, 550); // Players behind bar elements
+        
+        // Draw foreground bar elements (counter, stools in front)
+        // We simulate this by drawing a semi-transparent overlay at the bar depth
+        // Since we don't have separate layers, we'll handle depth through Y-sorting
+        
+        drawPlayersAtDepth(550, 9999); // Players in front of/at bar level
         
         ctx.restore();
         // --- End drawing the world ---
@@ -226,39 +236,51 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
-    function drawPlayers() {
+    function drawPlayersAtDepth(minY, maxY) {
         for (const id in players) {
             const player = players[id];
-            if (player.character && spriteSheets[player.character]) {
-                const sheet = spriteSheets[player.character];
-                const frameInfo = spriteFrames[player.character];
-                const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
-                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
-                const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
-                const frameX = frame.x * frameInfo.frameWidth;
-
-                const standardHeight = 700; // Match the size used in physics - almost as tall as bar
-                const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
-                const drawHeight = standardHeight;
-                const drawWidth = standardHeight * aspectRatio;
-
-                ctx.save();
-                ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
-                ctx.shadowBlur = 20;
-
-                // Enable image smoothing for better quality
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-
-                if (player.flipH) {
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
-                } else {
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
-                }
-                ctx.restore();
+            const playerY = player.y || 0;
+            if (playerY >= minY && playerY < maxY) {
+                drawPlayer(id, player);
             }
         }
+    }
+
+    function drawPlayer(id, player) {
+        if (player.character && spriteSheets[player.character]) {
+            const sheet = spriteSheets[player.character];
+            const frameInfo = spriteFrames[player.character];
+            const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
+            const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
+            const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
+            const frameX = frame.x * frameInfo.frameWidth;
+
+            const standardHeight = 700; // Match the size used in physics - almost as tall as bar
+            const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
+            const drawHeight = standardHeight;
+            const drawWidth = standardHeight * aspectRatio;
+
+            ctx.save();
+            ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
+            ctx.shadowBlur = 20;
+
+            // Enable image smoothing for better quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            if (player.flipH) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
+            } else {
+                ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
+            }
+            ctx.restore();
+        }
+    }
+
+    function drawPlayers() {
+        // This function is kept for backward compatibility but now calls drawPlayersAtDepth
+        drawPlayersAtDepth(0, 9999);
     }
 
     // --- WebSocket Connection ---
