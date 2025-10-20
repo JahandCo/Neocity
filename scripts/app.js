@@ -18,15 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- World & Dimensional Standards ---
     const world = {
-        width: 1248, // Match the broken mug bar width
-        height: 832, // Match the broken mug bar height
-        groundLevel: 832 - 50, // Adjust ground level for new height
+        width: 3840, // The width of our explorable level
+        height: 1080, // Our target resolution height
+        groundLevel: 1080 - 70,
     };
 
     // --- Physics & Camera ---
     const gravity = 0.6;
     const jumpPower = -15;
-    const moveSpeed = 12; // Increased from 7 for faster, smoother movement
+    const moveSpeed = 7;
     let yVelocity = 0;
     let isGrounded = false;
     let flipH = false;
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Spritesheet is 1344x768, with 5 frames horizontally (spaced out evenly)
     const spriteFrames = { synthya: { frameWidth: 268.8, frameHeight: 768 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
-    let animationFrame = 0, frameCounter = 0, frameSpeed = 8; // Increased from 6 for smoother animation
+    let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
     // --- Image Preloading ---
     async function preloadAssets() {
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 700; // Increased to be almost as tall as bar elements
+            const standardHeight = 600; // Much larger sprite to match background scale
             if (player.y > world.groundLevel - standardHeight) {
                 player.y = world.groundLevel - standardHeight;
                 yVelocity = 0; isGrounded = true;
@@ -167,8 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isGrounded) { player.animationState = (keys.a || keys.d) ? 'walking' : 'idle_front'; } else { player.animationState = 'action'; }
 
             // Camera Follow
-            camera.x = player.x - (world.width / 2); // Center on player
-            camera.x = Math.max(0, Math.min(camera.x, world.width - world.width)); // Clamp to world (no scroll needed for single screen)
+            camera.x = player.x - (1920 / 2); // Center on a 1920px view
+            camera.x = Math.max(0, Math.min(camera.x, world.width - 1920)); // Clamp to world
 
             // Network Update
             if (player.x !== lastState.x || player.y !== lastState.y || player.animationState !== lastState.animationState || flipH !== lastFlip) {
@@ -190,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DEFINITIVE RENDER FUNCTION ---
     function render() {
-        const gameWidth = world.width; // Use world dimensions
-        const gameHeight = world.height;
+        const gameWidth = 1920;
+        const gameHeight = 1080;
         const scale = Math.min(canvas.width / gameWidth, canvas.height / gameHeight);
 
         const renderWidth = gameWidth * scale;
@@ -212,23 +212,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         ctx.translate(-camera.x, -camera.y);
 
-        // Draw Environment - Use broken mug scene as background
-        if (environment.broken_mug) {
-            ctx.drawImage(environment.broken_mug, 0, 0, world.width, world.height);
-        }
+        // Draw Environment
+        if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
+        if (environment.broken_mug) ctx.drawImage(environment.broken_mug, 0, 0); // Use the long bar scene
 
-        // Draw Players with depth consideration
-        // The bar counter is roughly at Y=600-700, so we'll split rendering:
-        // - Characters with Y < 550 appear behind the bar
-        // - Characters with Y >= 550 appear in front of the bar
-        
-        drawPlayersAtDepth(0, 550); // Players behind bar elements
-        
-        // Draw foreground bar elements (counter, stools in front)
-        // We simulate this by drawing a semi-transparent overlay at the bar depth
-        // Since we don't have separate layers, we'll handle depth through Y-sorting
-        
-        drawPlayersAtDepth(550, 9999); // Players in front of/at bar level
+        // Draw Players
+        drawPlayers();
+
+        if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
         
         ctx.restore();
         // --- End drawing the world ---
@@ -236,51 +227,35 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
-    function drawPlayersAtDepth(minY, maxY) {
+    function drawPlayers() {
         for (const id in players) {
             const player = players[id];
-            const playerY = player.y || 0;
-            if (playerY >= minY && playerY < maxY) {
-                drawPlayer(id, player);
+            if (player.character && spriteSheets[player.character]) {
+                const sheet = spriteSheets[player.character];
+                const frameInfo = spriteFrames[player.character];
+                const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
+                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
+                const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
+                const frameX = frame.x * frameInfo.frameWidth;
+
+                const standardHeight = 600; // Match the size used in physics
+                const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
+                const drawHeight = standardHeight;
+                const drawWidth = standardHeight * aspectRatio;
+
+                ctx.save();
+                ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
+                ctx.shadowBlur = 20;
+
+                if (player.flipH) {
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
+                } else {
+                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
+                }
+                ctx.restore();
             }
         }
-    }
-
-    function drawPlayer(id, player) {
-        if (player.character && spriteSheets[player.character]) {
-            const sheet = spriteSheets[player.character];
-            const frameInfo = spriteFrames[player.character];
-            const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
-            const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
-            const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
-            const frameX = frame.x * frameInfo.frameWidth;
-
-            const standardHeight = 700; // Match the size used in physics - almost as tall as bar
-            const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
-            const drawHeight = standardHeight;
-            const drawWidth = standardHeight * aspectRatio;
-
-            ctx.save();
-            ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
-            ctx.shadowBlur = 20;
-
-            // Enable image smoothing for better quality
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            if (player.flipH) {
-                ctx.scale(-1, 1);
-                ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
-            } else {
-                ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
-            }
-            ctx.restore();
-        }
-    }
-
-    function drawPlayers() {
-        // This function is kept for backward compatibility but now calls drawPlayersAtDepth
-        drawPlayersAtDepth(0, 9999);
     }
 
     // --- WebSocket Connection ---

@@ -17,8 +17,8 @@ wss.on('connection', (ws) => {
     // Initialize player state with new spawn coordinates
     players.set(playerId, {
         id: playerId,
-        x: 200,  // Spawn on left side of bar scene
-        y: 100,  // Spawn higher up, will fall to ground
+        x: 300,  // Spawn closer to the left side of the world
+        y: 800,  // Spawn higher up, will fall to ground
         character: null,
         animationState: 'idle_front',
         flipH: false,
