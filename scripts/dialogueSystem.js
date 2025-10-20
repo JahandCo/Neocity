@@ -156,14 +156,31 @@ class DialogueSystem {
             
             if (this.characterImages[speakerKey] && this.characterImages[speakerKey][emotion]) {
                 const img = this.characterImages[speakerKey][emotion];
-                const imgX = (gameWidth - this.characterImageWidth) / 2;
-                const imgY = gameHeight / 2 - this.characterImageHeight / 2 - 50;
+                
+                // Calculate proper aspect ratio to avoid squeezing
+                const imgAspect = img.width / img.height;
+                const maxHeight = 700; // Max height for portrait
+                const maxWidth = 500;  // Max width for portrait
+                
+                let drawWidth, drawHeight;
+                if (imgAspect > maxWidth / maxHeight) {
+                    // Image is wider - fit to width
+                    drawWidth = maxWidth;
+                    drawHeight = maxWidth / imgAspect;
+                } else {
+                    // Image is taller - fit to height
+                    drawHeight = maxHeight;
+                    drawWidth = maxHeight * imgAspect;
+                }
+                
+                const imgX = (gameWidth - drawWidth) / 2;
+                const imgY = (gameHeight - drawHeight) / 2 - 80;
                 
                 // Draw character with glow effect
                 ctx.save();
                 ctx.shadowColor = '#00ffff';
                 ctx.shadowBlur = 30;
-                ctx.drawImage(img, imgX, imgY, this.characterImageWidth, this.characterImageHeight);
+                ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
                 ctx.restore();
             }
         }

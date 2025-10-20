@@ -49,22 +49,28 @@ document.addEventListener('DOMContentLoaded', () => {
     async function preloadAssets() {
         const imageSources = {
             synthya_sheet: 'assets/images/characters/synthya/synthya_spritesheet.png',
+            synthya_normal: 'assets/images/characters/synthya/synthya-normal.png',
             synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
             synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
             synthya_surprise: 'assets/images/characters/synthya/synthya-suprise.png',
+            kael_normal: 'assets/images/characters/kael/kael-normal.png',
+            kael_happy: 'assets/images/characters/kael/kael-happy.png',
+            kael_surprise: 'assets/images/characters/kael/kael-suprise.png',
+            kael_think: 'assets/images/characters/kael/kael-think.png',
             bg_far: 'assets/images/backgrounds/bg-far.png',
             bg_middle: 'assets/images/backgrounds/bg-middle.png',
             bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
-            broken_mug: 'assets/images/scenes/thebrokenmug.png'
+            broken_mug: 'assets/images/scenes/thebrokenmug.png',
+            jukebox: 'assets/images/scenes/jukebox.png'
         };
         const promises = Object.entries(imageSources).map(([name, src]) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = src;
                 img.onload = () => {
-                    if (name.startsWith('bg_') || name === 'broken_mug') environment[name] = img;
+                    if (name.startsWith('bg_') || name === 'broken_mug' || name === 'jukebox') environment[name] = img;
                     else if (name.includes('_sheet')) spriteSheets['synthya'] = img;
-                    else if (name.startsWith('synthya_')) characterPortraits[name] = img;
+                    else if (name.startsWith('synthya_') || name.startsWith('kael_')) characterPortraits[name] = img;
                     resolve();
                 };
                 img.onerror = () => reject(`Failed to load ${src}`);
@@ -282,11 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw Environment
         if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-        // Position the bar scene properly - scale it larger and position it to fill the bottom area
+        // Position the bar scene to fill the screen - scale it up and position lower to cover bottom
         if (environment.broken_mug) {
             const barWidth = 1920;
-            const barHeight = 1080;
-            ctx.drawImage(environment.broken_mug, 0, 0, barWidth, barHeight);
+            const barHeight = 1400; // Taller to fill more of the screen
+            const barY = -200; // Position lower so bar fills bottom, only far bg visible at top
+            ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
         }
 
         // Draw Players

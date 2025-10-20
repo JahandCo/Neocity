@@ -100,10 +100,17 @@ class MemoryPuzzleGame {
     }
     
     handleInput(key) {
-        if (this.isComplete) return;
-        
         const cols = this.gridSize;
         const rows = this.gridSize;
+        
+        // Handle completion
+        if (this.isComplete) {
+            // Allow Enter or Space to continue after completion
+            if (key === 'Enter' || key === ' ') {
+                return; // Let the parent handle this
+            }
+            return;
+        }
         
         switch (key) {
             case 'ArrowUp':
