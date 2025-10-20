@@ -214,7 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw Environment
         if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-        if (environment.broken_mug) ctx.drawImage(environment.broken_mug, 0, 0); // Use the long bar scene
+        // Position the bar scene at the bottom of the 1080px world
+        if (environment.broken_mug) ctx.drawImage(environment.broken_mug, 0, 1080 - 832); // Bar at bottom
 
         // Draw Players
         drawPlayers();
