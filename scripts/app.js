@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Spritesheet is 1344x768, with 5 frames horizontally (spaced out evenly)
     const spriteFrames = { synthya: { frameWidth: 268.8, frameHeight: 768 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
-    let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
+    let animationFrame = 0, frameCounter = 0, frameSpeed = 8;
 
     // --- Image Preloading ---
     async function preloadAssets() {
@@ -157,7 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 600; // Much larger sprite to match background scale
+            // Adjust standard height to maintain aspect ratio without clipping
+            // Using the sprite's native height to ensure full character is visible
+            const standardHeight = 768; // Use full sprite height to prevent clipping
             if (player.y > world.groundLevel - standardHeight) {
                 player.y = world.groundLevel - standardHeight;
                 yVelocity = 0; isGrounded = true;
@@ -239,10 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
                 const frameX = frame.x * frameInfo.frameWidth;
 
-                const standardHeight = 600; // Match the size used in physics
+                // Use full sprite height to maintain aspect ratio without clipping
+                const drawHeight = 768;
                 const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
-                const drawHeight = standardHeight;
-                const drawWidth = standardHeight * aspectRatio;
+                const drawWidth = drawHeight * aspectRatio;
 
                 ctx.save();
                 ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
