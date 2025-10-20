@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEOCITY</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <div id="login-screen">
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="screen">
         <div class="login-container">
             <h1 class="game-title">NEOCITY</h1>
             <p class="logline">A cybertech-inspired multiverse social platform.</p>
@@ -15,34 +16,43 @@
         </div>
     </div>
 
-    <div id="app-container" style="display: none;">
-        <!-- Main application interface will go here -->
-        <header>
-            <div class="header-left">
-                <span class="currency">CHROMA: 0</span>
+    <!-- CHARACTER SELECT SCREEN -->
+    <div id="character-select-screen" class="screen" style="display: none;">
+        <h2>Choose Your Echo</h2>
+        <div class="character-grid">
+            <div class="char-card" data-char="synthya" data-img="assets/images/synthya.png">
+                <img src="assets/images/synthya.png" alt="Synthya">
+                <h3>Synthya</h3>
+                <p>The Memory Weaver</p>
             </div>
-            <div class="header-right">
-                <button class="nav-btn">Echo</button>
-                <button class="nav-btn">Syndicate</button>
-                <button class="nav-btn">Data-Den</button>
+            <div class="char-card" data-char="rune" data-img="assets/images/rune.png">
+                <img src="assets/images/rune.png" alt="Rune">
+                <h3>Rune</h3>
+                <p>The Hacker</p>
             </div>
-        </header>
-
-        <main id="main-hub">
-            <h2>The Grid</h2>
-            <p>Welcome, Echo. The digital world awaits.</p>
-            <!-- Sim-Chambers (Mini-Games) access points -->
-            <div id="sim-chambers">
-                <h3>Sim-Chambers</h3>
-                <div class="game-list">
-                    <div class="game-card">Grav-Ball</div>
-                    <div class="game-card">Data Heist</div>
-                    <div class="game-card">Synth-Racer</div>
-                </div>
+            <div class="char-card" data-char="kael" data-img="assets/images/kael.png">
+                <img src="assets/images/kael.png" alt="Kael">
+                <h3>Kael</h3>
+                <p>The Tech-Tinkerer</p>
             </div>
-        </main>
+            <div class="char-card" data-char="echo" data-img="assets/images/echo.png">
+                <img src="assets/images/echo.png" alt="Echo">
+                <h3>Echo</h3>
+                <p>The Sound Weaver</p>
+            </div>
+            <div class="char-card" data-char="vesper" data-img="assets/images/vesper.png">
+                <img src="assets/images/vesper.png" alt="Vesper">
+                <h3>Vesper</h3>
+                <p>The Ghost Runner</p>
+            </div>
+        </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- GAME APP CONTAINER -->
+    <div id="app-container" style="display: none;">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <script src="scripts/app.js"></script>
 </body>
 </html>

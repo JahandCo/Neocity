@@ -1,0 +1,23 @@
+{
+  "name": "neocity",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JahandCo/Neocity.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JahandCo/Neocity/issues"
+  },
+  "homepage": "https://github.com/JahandCo/Neocity#readme",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}
