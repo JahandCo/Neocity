@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Story system state
     let dialogueSystem = null;
     let miniGameSystem = null;
+    let interactionSystem = null;
     let storyMode = false;
     let storyTriggered = false;
 
@@ -225,6 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Camera Follow
             camera.x = player.x - (1920 / 2); // Center on a 1920px view
             camera.x = Math.max(0, Math.min(camera.x, world.width - 1920)); // Clamp to world
+            
+            // Check for interactions
+            if (interactionSystem) {
+                interactionSystem.checkInteractions(player.x, player.y);
+            }
 
             // Network Update
             if (player.x !== lastState.x || player.y !== lastState.y || player.animationState !== lastState.animationState || flipH !== lastFlip) {
@@ -298,17 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (miniGameSystem && miniGameSystem.isActive) {
                 miniGameSystem.render(gameWidth, gameHeight);
             }
-        } else if (!storyTriggered && localPlayerId && players[localPlayerId]) {
-            // Show interaction prompt when near bar
-            const player = players[localPlayerId];
-            if (player.x < 800) {
-                ctx.save();
-                ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-                ctx.font = '24px "Courier New", monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('Press E to start story', gameWidth / 2, 100);
-                ctx.restore();
-            }
+        } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
+            // Show interaction prompts
+            interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
         }
 
         ctx.restore();
@@ -352,6 +350,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize story systems
         dialogueSystem = new DialogueSystem(canvas, ctx, synthyaStory);
         miniGameSystem = new MiniGameSystem(canvas, ctx);
+        interactionSystem = new InteractionSystem(canvas, ctx);
+        
+        // Add interaction points
+        interactionSystem.addInteraction(300, 480, "The bartender seems busy...", () => {
+            startStory();
+        });
         
         return new Promise((resolve) => {
             ws = new WebSocket('ws://localhost:8080');
