@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Story System Functions ---
     function startStory() {
-        console.log('Starting Synthya\'s story!');
+        console.log('Starting Synthya\'s story - Chapter 1: The Memory-Loop!');
         storyMode = true;
         storyTriggered = true;
         
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         keys.s = false;
         keys[' '] = false;
         
-        // Start the intro scene
-        dialogueSystem.startScene('intro');
+        // Start the archive intro scene
+        dialogueSystem.startScene('archive_intro');
     }
 });
