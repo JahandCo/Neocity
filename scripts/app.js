@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let interactionSystem = null;
     let storyMode = false;
     let storyTriggered = false;
+    let walkingToPuzzle = false;
+    let puzzleTarget = null;
+    let puzzleTargetScene = null;
+    let puzzleElements = {};
 
     // --- World & Dimensional Standards ---
     const world = {
@@ -165,6 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (result && result.type === 'minigame') {
                         miniGameSystem.startGame(result.game);
                         dialogueSystem.isActive = false;
+                    } else if (result && result.type === 'walk_to_puzzle') {
+                        // Start walking to puzzle location
+                        startWalkToPuzzle(result.nextScene);
                     }
                 }
             } else if (miniGameSystem && miniGameSystem.isActive) {
@@ -363,6 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         interactionSystem.addInteraction(300, 480, "The bartender seems busy...", () => {
             startStory();
         });
+        
+        // Define puzzle element positions in the bar
+        puzzleElements = {
+            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox' },
+            sign: { x: 800, y: 480, scene: 'puzzle_sign' },
+            kael: { x: 400, y: 480, scene: 'puzzle_kael_final' }
+        };
         
         return new Promise((resolve) => {
             ws = new WebSocket('ws://localhost:8080');

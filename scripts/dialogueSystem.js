@@ -84,11 +84,22 @@ class DialogueSystem {
                 // Trigger minigame
                 return { type: 'minigame', game: choice.minigame, nextScene: choice.nextScene };
             } else {
+                // Check if this scene requires walking to a location first
+                const needsWalking = this.checkIfNeedsWalking(choice.nextScene);
+                if (needsWalking) {
+                    return { type: 'walk_to_puzzle', nextScene: choice.nextScene };
+                }
                 // Move to next scene
                 this.startScene(choice.nextScene);
                 return { type: 'scene', nextScene: choice.nextScene };
             }
         }
+    }
+    
+    checkIfNeedsWalking(sceneId) {
+        // Scenes that require walking to a location
+        const walkScenes = ['puzzle_jukebox', 'puzzle_sign', 'puzzle_kael_final'];
+        return walkScenes.includes(sceneId);
     }
     
     triggerEffects(effects) {
