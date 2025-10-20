@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = { x: 0, y: 0 };
 
     // --- Sprite Sheet Definitions ---
-    const spriteFrames = { synthya: { frameWidth: 122, frameHeight: 408 } };
+    // Spritesheet is 1920x1080, with 5 frames horizontally
+    const spriteFrames = { synthya: { frameWidth: 384, frameHeight: 1080 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
     let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 160;
+            const standardHeight = 600; // Much larger sprite to match background scale
             if (player.y > world.groundLevel - standardHeight) {
                 player.y = world.groundLevel - standardHeight;
                 yVelocity = 0; isGrounded = true;
@@ -187,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
                 const frameX = frame.x * frameInfo.frameWidth;
 
-                const standardHeight = 160;
+                const standardHeight = 600; // Match the size used in physics
                 const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
                 const drawHeight = standardHeight;
                 const drawWidth = standardHeight * aspectRatio;
