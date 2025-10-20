@@ -245,6 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const drawHeight = 768;
                 const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
                 const drawWidth = drawHeight * aspectRatio;
+                
+                // Prevent bleeding from adjacent frames by using a slightly smaller source width
+                // This ensures we only sample from within the current frame boundaries
+                const sourceWidth = frameInfo.frameWidth - 0.5; // Reduce by half pixel to prevent bleeding
 
                 ctx.save();
                 ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
@@ -252,9 +256,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (player.flipH) {
                     ctx.scale(-1, 1);
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
+                    ctx.drawImage(
+                        sheet, 
+                        frameX, 0, sourceWidth, frameInfo.frameHeight,
+                        -player.x - drawWidth, player.y, drawWidth, drawHeight
+                    );
                 } else {
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
+                    ctx.drawImage(
+                        sheet, 
+                        frameX, 0, sourceWidth, frameInfo.frameHeight,
+                        player.x, player.y, drawWidth, drawHeight
+                    );
                 }
                 ctx.restore();
             }
