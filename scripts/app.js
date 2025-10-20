@@ -33,18 +33,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = { x: 0, y: 0 };
 
     // --- Sprite Sheet Definitions ---
-    // Spritesheet is 1920x1080, with 5 frames horizontally
-    const spriteFrames = { synthya: { frameWidth: 384, frameHeight: 1080 } };
+    // Spritesheet is 1344x768, with 5 frames horizontally (spaced out evenly)
+    const spriteFrames = { synthya: { frameWidth: 268.8, frameHeight: 768 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
     let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
     // --- Image Preloading ---
     async function preloadAssets() {
         const imageSources = {
-            synthya_sheet: 'assets/images/synthya_spritesheet.png',
-            bg_far: 'assets/images/bg-far.png',
-            bg_middle: 'assets/images/bg-middle.png',
-            bg_foreground: 'assets/images/bg-foreground.png'
+            synthya_sheet: 'assets/images/characters/synthya/synthya_spritesheet.png',
+            bg_far: 'assets/images/backgrounds/bg-far.png',
+            bg_middle: 'assets/images/backgrounds/bg-middle.png',
+            bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
+            broken_mug: 'assets/images/scenes/thebrokenmug.png'
         };
         const promises = Object.entries(imageSources).map(([name, src]) => {
             return new Promise((resolve, reject) => {
@@ -70,15 +71,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     enterGridBtn.addEventListener('click', () => { loginScreen.style.display = 'none'; charSelectScreen.style.display = 'flex'; });
+    
+    // Character card hover and click interactions
+    const infoPanel = document.getElementById('character-info-panel');
+    const infoName = document.getElementById('info-char-name');
+    const infoDesc = document.getElementById('info-char-desc');
+    
     document.querySelectorAll('.char-card').forEach(card => {
+        // Hover to show character info
+        card.addEventListener('mouseenter', () => {
+            const charName = card.querySelector('h3').textContent;
+            const charRole = card.querySelector('p').textContent;
+            const charInfo = card.dataset.info;
+            infoName.textContent = `${charName} - ${charRole}`;
+            infoDesc.textContent = charInfo;
+            infoPanel.style.borderColor = '#00ffff';
+            infoPanel.style.boxShadow = '0 0 40px rgba(0, 255, 255, 0.6), inset 0 0 30px rgba(0, 255, 255, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            infoName.textContent = 'Select an Echo';
+            infoDesc.textContent = 'Hover over a character to learn more about their abilities';
+            infoPanel.style.borderColor = '#8a2be2';
+            infoPanel.style.boxShadow = '0 0 30px rgba(138, 43, 226, 0.5), inset 0 0 20px rgba(138, 43, 226, 0.1)';
+        });
+        
+        // Click to select character with animation
         card.addEventListener('click', async () => {
             const selectedChar = card.dataset.char;
             if (selectedChar !== 'synthya') { alert("Only Synthya is available in this demo."); return; }
-            charSelectScreen.style.display = 'none'; appContainer.style.display = 'block';
-            resizeCanvas(); await connectToServer();
-            ws.send(JSON.stringify({ type: 'characterSelect', character: selectedChar }));
+            
+            // Selection animation
+            card.style.transform = 'scale(1.3)';
+            card.style.transition = 'transform 0.5s ease, opacity 0.8s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '0';
+                charSelectScreen.style.opacity = '0';
+                charSelectScreen.style.transition = 'opacity 1s ease';
+                
+                setTimeout(() => {
+                    charSelectScreen.style.display = 'none';
+                    appContainer.style.display = 'block';
+                    appContainer.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        appContainer.style.transition = 'opacity 1.5s ease';
+                        appContainer.style.opacity = '1';
+                    }, 50);
+                    
+                    resizeCanvas();
+                    connectToServer().then(() => {
+                        ws.send(JSON.stringify({ type: 'characterSelect', character: selectedChar }));
+                    });
+                }, 800);
+            }, 500);
         });
     });
+    
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
