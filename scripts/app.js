@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const characterPortraits = {};
     const spriteSheets = {};
     const environment = {};
+    
+    // Story system state
+    let dialogueSystem = null;
+    let miniGameSystem = null;
+    let storyMode = false;
+    let storyTriggered = false;
 
     // --- World & Dimensional Standards ---
     const world = {
@@ -42,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function preloadAssets() {
         const imageSources = {
             synthya_sheet: 'assets/images/characters/synthya/synthya_spritesheet.png',
+            synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
+            synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
+            synthya_surprise: 'assets/images/characters/synthya/synthya-suprise.png',
             bg_far: 'assets/images/backgrounds/bg-far.png',
             bg_middle: 'assets/images/backgrounds/bg-middle.png',
             bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
@@ -54,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.onload = () => {
                     if (name.startsWith('bg_') || name === 'broken_mug') environment[name] = img;
                     else if (name.includes('_sheet')) spriteSheets['synthya'] = img;
+                    else if (name.startsWith('synthya_')) characterPortraits[name] = img;
                     resolve();
                 };
                 img.onerror = () => reject(`Failed to load ${src}`);
@@ -132,10 +142,56 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
+        
+        // Handle story mode input
+        if (storyMode) {
+            if (dialogueSystem && dialogueSystem.isActive) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    const result = dialogueSystem.nextDialogue();
+                    if (result === 'end') {
+                        storyMode = false;
+                    }
+                } else if (e.key >= '1' && e.key <= '9') {
+                    const choiceIndex = parseInt(e.key) - 1;
+                    const result = dialogueSystem.selectChoice(choiceIndex);
+                    if (result && result.type === 'minigame') {
+                        miniGameSystem.startGame(result.game);
+                        dialogueSystem.isActive = false;
+                    }
+                }
+            } else if (miniGameSystem && miniGameSystem.isActive) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    if (miniGameSystem.gameComplete) {
+                        miniGameSystem.endGame();
+                        if (dialogueSystem.currentScene) {
+                            dialogueSystem.isActive = true;
+                        }
+                    }
+                } else {
+                    miniGameSystem.handleInput(e.key);
+                }
+            }
+            return;
+        }
+        
+        // Normal game input
         if (keys[key] !== undefined) keys[key] = true;
         if ((key === 'w' || key === ' ') && isGrounded) { yVelocity = jumpPower; isGrounded = false; }
+        
+        // Trigger story with 'E' key when near the bar
+        if (key === 'e' && !storyTriggered && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            // Check if player is in the bar area (left side of the world)
+            if (player.x < 800) {
+                startStory();
+            }
+        }
     });
-    window.addEventListener('keyup', (e) => { if (keys[e.key.toLowerCase()] !== undefined) keys[e.key.toLowerCase()] = false; });
+    window.addEventListener('keyup', (e) => { 
+        if (storyMode) return; // Don't handle keyup in story mode
+        if (keys[e.key.toLowerCase()] !== undefined) keys[e.key.toLowerCase()] = false; 
+    });
 
     // --- Canvas Resize ---
     function resizeCanvas() {
@@ -145,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function gameLoop() {
         // --- Player Logic ---
-        if (localPlayerId && players[localPlayerId]) {
+        if (!storyMode && localPlayerId && players[localPlayerId]) {
             const player = players[localPlayerId];
             let lastState = { ...player };
             let lastFlip = flipH;
@@ -176,6 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     ws.send(JSON.stringify({ type: 'updateState', x: player.x, y: player.y, animationState: player.animationState, flipH: flipH }));
                 }
             }
+        }
+        
+        // Update story systems
+        if (storyMode) {
+            if (dialogueSystem) dialogueSystem.update();
+            if (miniGameSystem) miniGameSystem.update();
         }
 
         // --- Rendering ---
@@ -214,8 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw Environment
         if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-        // Position the bar scene at the bottom of the 1080px world
-        if (environment.broken_mug) ctx.drawImage(environment.broken_mug, 0, 1080 - 832); // Bar at bottom
+        // Position the bar scene properly - scale it larger and position it to fill the bottom area
+        if (environment.broken_mug) {
+            const barWidth = 1920;
+            const barHeight = 1080;
+            ctx.drawImage(environment.broken_mug, 0, 0, barWidth, barHeight);
+        }
 
         // Draw Players
         drawPlayers();
@@ -224,6 +290,26 @@ document.addEventListener('DOMContentLoaded', () => {
         
         ctx.restore();
         // --- End drawing the world ---
+        
+        // Draw story UI on top if active
+        if (storyMode) {
+            if (dialogueSystem && dialogueSystem.isActive) {
+                dialogueSystem.render(gameWidth, gameHeight);
+            } else if (miniGameSystem && miniGameSystem.isActive) {
+                miniGameSystem.render(gameWidth, gameHeight);
+            }
+        } else if (!storyTriggered && localPlayerId && players[localPlayerId]) {
+            // Show interaction prompt when near bar
+            const player = players[localPlayerId];
+            if (player.x < 800) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.font = '24px "Courier New", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('Press E to start story', gameWidth / 2, 100);
+                ctx.restore();
+            }
+        }
 
         ctx.restore();
     }
@@ -262,6 +348,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- WebSocket Connection ---
     async function connectToServer() {
         await preloadAssets();
+        
+        // Initialize story systems
+        dialogueSystem = new DialogueSystem(canvas, ctx, synthyaStory);
+        miniGameSystem = new MiniGameSystem(canvas, ctx);
+        
         return new Promise((resolve) => {
             ws = new WebSocket('ws://localhost:8080');
             ws.onopen = () => { console.log('[Client] Connected.'); gameLoop(); resolve(); };
@@ -283,5 +374,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ws.onclose = () => console.log('[Client] Disconnected.');
             ws.onerror = (error) => console.error('[Client] WebSocket Error:', error);
         });
+    }
+    
+    // --- Story System Functions ---
+    function startStory() {
+        console.log('Starting Synthya\'s story!');
+        storyMode = true;
+        storyTriggered = true;
+        
+        // Disable player movement
+        keys.a = false;
+        keys.d = false;
+        keys.w = false;
+        keys.s = false;
+        keys[' '] = false;
+        
+        // Start the intro scene
+        dialogueSystem.startScene('intro');
     }
 });
