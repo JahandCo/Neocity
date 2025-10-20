@@ -19,31 +19,42 @@
     <!-- CHARACTER SELECT SCREEN -->
     <div id="character-select-screen" class="screen" style="display: none;">
         <h2>Choose Your Echo</h2>
-        <div class="character-grid">
-            <div class="char-card" data-char="synthya" data-img="assets/images/synthya.png">
-                <img src="assets/images/synthya.png" alt="Synthya">
+        <div class="character-selection-container">
+            <div class="character-grid">
+            <div class="char-card" data-char="synthya" data-img="assets/images/characters/synthya/synthya.png" 
+                data-info="A digital archaeologist who weaves through forgotten memories in The Grid. Synthya specializes in data recovery and memory restoration, able to reconstruct lost fragments of consciousness.">
+                <img src="assets/images/characters/synthya/synthya.png" alt="Synthya">
                 <h3>Synthya</h3>
                 <p>The Memory Weaver</p>
             </div>
-            <div class="char-card" data-char="rune" data-img="assets/images/rune.png">
-                <img src="assets/images/rune.png" alt="Rune">
+            <div class="char-card" data-char="rune" data-img="assets/images/characters/rune/rune.png"
+                data-info="A notorious infiltrator of corporate systems. Rune breaks through digital firewalls and encryptions with ease, exposing secrets hidden in the deepest layers of The Grid.">
+                <img src="assets/images/characters/rune/rune.png" alt="Rune">
                 <h3>Rune</h3>
                 <p>The Hacker</p>
             </div>
-            <div class="char-card" data-char="kael" data-img="assets/images/kael.png">
-                <img src="assets/images/kael.png" alt="Kael">
+            <div class="char-card" data-char="kael" data-img="assets/images/characters/kael/kael.png"
+                data-info="A brilliant engineer who builds and modifies Echo hardware. Kael crafts custom cybernetic enhancements and experimental tech from salvaged Grid components.">
+                <img src="assets/images/characters/kael/kael.png" alt="Kael">
                 <h3>Kael</h3>
                 <p>The Tech-Tinkerer</p>
             </div>
-            <div class="char-card" data-char="echo" data-img="assets/images/echo.png">
-                <img src="assets/images/echo.png" alt="Echo">
+            <div class="char-card" data-char="echo" data-img="assets/images/characters/echo/echo.png"
+                data-info="A sonic manipulator who transforms digital soundwaves into powerful tools. Echo crafts audio signatures that can unlock doors, disable security, or create mesmerizing performances.">
+                <img src="assets/images/characters/echo/echo.png" alt="Echo">
                 <h3>Echo</h3>
                 <p>The Sound Weaver</p>
             </div>
-            <div class="char-card" data-char="vesper" data-img="assets/images/vesper.png">
-                <img src="assets/images/vesper.png" alt="Vesper">
+            <div class="char-card" data-char="vesper" data-img="assets/images/characters/vesper/vesper.png"
+                data-info="A stealth specialist who moves unseen through The Grid's shadows. Vesper excels at reconnaissance, data theft, and navigating the most dangerous zones undetected.">
+                <img src="assets/images/characters/vesper/vesper.png" alt="Vesper">
                 <h3>Vesper</h3>
                 <p>The Ghost Runner</p>
+            </div>
+            </div>
+            <div class="character-info-panel" id="character-info-panel">
+                <h3 id="info-char-name">Select an Echo</h3>
+                <p id="info-char-desc">Hover over a character to learn more about their abilities</p>
             </div>
         </div>
     </div>
