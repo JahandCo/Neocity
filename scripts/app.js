@@ -253,6 +253,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // Handle walking to puzzle elements during story mode
+        if (storyMode && walkingToPuzzle && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            const target = puzzleTarget;
+            
+            if (target) {
+                const distance = Math.abs(player.x - target.x);
+                
+                if (distance > 50) {
+                    // Keep walking towards target
+                    if (player.x < target.x) {
+                        player.x += moveSpeed;
+                        flipH = false;
+                    } else {
+                        player.x -= moveSpeed;
+                        flipH = true;
+                    }
+                    player.animationState = 'walking';
+                } else {
+                    // Reached target, start the scene
+                    walkingToPuzzle = false;
+                    player.animationState = 'idle_front';
+                    dialogueSystem.startScene(puzzleTargetScene);
+                    dialogueSystem.isActive = true;
+                    puzzleTarget = null;
+                    puzzleTargetScene = null;
+                }
+            }
+        }
+        
         // Update story systems
         if (storyMode) {
             if (dialogueSystem) dialogueSystem.update();
@@ -416,5 +446,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Start the archive intro scene
         dialogueSystem.startScene('archive_intro');
+    }
+    
+    function startWalkToPuzzle(sceneId) {
+        console.log(`Walking to puzzle: ${sceneId}`);
+        
+        // Determine which puzzle element based on scene ID
+        let targetElement = null;
+        if (sceneId === 'puzzle_jukebox') {
+            targetElement = puzzleElements.jukebox;
+        } else if (sceneId === 'puzzle_sign') {
+            targetElement = puzzleElements.sign;
+        } else if (sceneId === 'puzzle_kael_final') {
+            targetElement = puzzleElements.kael;
+        }
+        
+        if (targetElement) {
+            walkingToPuzzle = true;
+            puzzleTarget = targetElement;
+            puzzleTargetScene = sceneId;
+            dialogueSystem.isActive = false; // Hide dialogue while walking
+        } else {
+            // If no walking needed, start scene directly
+            dialogueSystem.startScene(sceneId);
+        }
     }
 });
