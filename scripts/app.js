@@ -44,15 +44,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = { x: 0, y: 0 };
 
     // --- Sprite Sheet Definitions ---
-    // Spritesheet is 1344x768, with 5 frames horizontally (spaced out evenly)
-    const spriteFrames = { synthya: { frameWidth: 268.8, frameHeight: 768 } };
+    // Spritesheet is 1344x768, with 5 frames horizontally
+    // Using integer frame width (268) to prevent bleeding between frames
+    const spriteFrames = { synthya: { frameWidth: 268, frameHeight: 768 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
     let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
     // --- Image Preloading ---
     async function preloadAssets() {
         const imageSources = {
-            synthya_sheet: 'assets/images/characters/synthya/synthya_spritesheet.png',
+            synthya_sheet: 'assets/images/characters/synthya/synthya-spritesheet.png',
             synthya_normal: 'assets/images/characters/synthya/synthya-normal.png',
             synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
             synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 600; // Much larger sprite to match background scale
+            const standardHeight = 700; // Increased sprite size
             if (player.y > world.groundLevel - standardHeight) {
                 player.y = world.groundLevel - standardHeight;
                 yVelocity = 0; isGrounded = true;
@@ -367,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
                 const frameX = frame.x * frameInfo.frameWidth;
 
-                const standardHeight = 600; // Match the size used in physics
+                const standardHeight = 700; // Increased character size
                 const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
                 const drawHeight = standardHeight;
                 const drawWidth = standardHeight * aspectRatio;

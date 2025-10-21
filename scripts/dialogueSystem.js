@@ -10,9 +10,10 @@ class DialogueSystem {
         this.choiceSelected = null;
         
         // UI dimensions (based on 1920x1080 game resolution)
+        // Increased portrait sizes for better visibility
         this.dialogueBoxHeight = 250;
-        this.characterImageWidth = 400;
-        this.characterImageHeight = 600;
+        this.characterImageWidth = 600;  // Increased from 400
+        this.characterImageHeight = 900; // Increased from 600
         
         // Load character images
         this.characterImages = {};
@@ -170,8 +171,8 @@ class DialogueSystem {
                 
                 // Calculate proper aspect ratio to avoid squeezing
                 const imgAspect = img.width / img.height;
-                const maxHeight = 700; // Max height for portrait
-                const maxWidth = 500;  // Max width for portrait
+                const maxHeight = 900; // Increased max height for larger portraits
+                const maxWidth = 650;  // Increased max width for larger portraits
                 
                 let drawWidth, drawHeight;
                 if (imgAspect > maxWidth / maxHeight) {
