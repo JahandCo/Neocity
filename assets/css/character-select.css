@@ -1,0 +1,98 @@
+/* Character Select Styles */
+.character-selection-container.details-view .character-grid {
+    display: none;
+}
+
+.character-details {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 1200px;
+    height: 80%;
+    max-height: 800px;
+    background: rgba(10, 10, 30, 0.95);
+    border: 2px solid #00ffff;
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    padding: 40px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.character-details .char-image {
+    flex: 1;
+    text-align: center;
+}
+
+.character-details .char-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.character-details .char-info {
+    flex: 2;
+    padding-left: 40px;
+}
+
+.character-details h2 {
+    font-size: 48px;
+    color: #00ffff;
+    margin-bottom: 20px;
+}
+
+.character-details p {
+    font-size: 20px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+.character-details .char-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+.character-details .char-buttons button {
+    background: transparent;
+    border: 2px solid #00ffff;
+    color: #00ffff;
+    padding: 10px 20px;
+    font-size: 18px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+}
+
+.character-details .char-buttons button:hover {
+    background: #00ffff;
+    color: #000;
+    box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+
+.char-card .lock-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px;
+    color: #ff0000;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 50%;
+    display: none;
+}
+
+.char-card.locked .lock-icon {
+    display: block;
+}
+
+.char-card.locked img {
+    filter: grayscale(100%);
+}

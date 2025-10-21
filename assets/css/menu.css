@@ -1,0 +1,102 @@
+/* Basic screen styling */
+.screen {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(10, 10, 30, 0.9); /* Dark, semi-transparent background */
+    border: 2px solid #00ffff; /* Cyan border */
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); /* Cyan glow */
+    color: #00ffff; /* Cyan text */
+    font-family: 'Courier New', monospace;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+/* Canvas for particle effects */
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Hide character select screen initially */
+#character-select-screen {
+    display: none;
+}
+
+/* Menu logo */
+.logo {
+    width: 200px;
+    margin-bottom: 40px;
+    animation: float 4s ease-in-out infinite;
+}
+
+/* Menu buttons container */
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* General button style */
+.menu-buttons button, #back-to-menu-btn {
+    background: transparent;
+    border: 2px solid #00ffff;
+    color: #00ffff;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+}
+
+/* Button hover effect */
+.menu-buttons button:hover, #back-to-menu-btn:hover {
+    background: #00ffff;
+    color: #000;
+    box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+/* Back to menu button positioning */
+#back-to-menu-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+/* Keyframe animations */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Add a title to the menu */
+#login-screen h1 {
+    font-size: 48px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
