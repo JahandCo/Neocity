@@ -22,10 +22,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let interactionSystem = null;
     let storyMode = false;
     let storyTriggered = false;
-    let walkingToPuzzle = false;
-    let puzzleTarget = null;
-    let puzzleTargetScene = null;
-    let puzzleElements = {};
+    
+    // Puzzle discovery tracking
+    let puzzlesDiscovered = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    let puzzlesCompleted = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    // Define puzzle element positions and visual properties
+    const puzzleElements = {
+        jukebox: { x: 1400, y: 380, width: 120, height: 200, range: 150 },
+        neon_sign: { x: 750, y: 250, width: 200, height: 100, range: 150 },
+        kael: { x: 400, y: 380, width: 100, height: 150, range: 150 }
+    };
 
     // --- World & Dimensional Standards ---
     const world = {
