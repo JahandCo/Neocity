@@ -420,9 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Define puzzle element positions in the bar
         puzzleElements = {
-            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox' },
-            sign: { x: 800, y: 480, scene: 'puzzle_sign' },
-            kael: { x: 400, y: 480, scene: 'puzzle_kael_final' }
+            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox', width: 100, height: 200, range: 50 },
+            sign: { x: 800, y: 480, scene: 'puzzle_sign', width: 80, height: 160, range: 40 },
+            kael: { x: 400, y: 480, scene: 'puzzle_kael_final', width: 90, height: 180, range: 45 }
         };
         
         return new Promise((resolve) => {
