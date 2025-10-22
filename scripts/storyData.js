@@ -316,20 +316,7 @@ const synthyaStory = {
                     effects: null
                 }
             ],
-            choices: [
-                {
-                    text: "Investigate the glitched jukebox",
-                    nextScene: "puzzle_jukebox"
-                },
-                {
-                    text: "Examine the broken sign",
-                    nextScene: "puzzle_sign"
-                },
-                {
-                    text: "Talk to Kael again",
-                    nextScene: "puzzle_kael_talk"
-                }
-            ]
+            // No choices: player must free-roam and interact with anomalies
         },
         
         // Puzzle 1: The Glitched Jukebox
@@ -418,16 +405,7 @@ const synthyaStory = {
                     effects: null
                 }
             ],
-            choices: [
-                {
-                    text: "Examine the broken sign",
-                    nextScene: "puzzle_sign"
-                },
-                {
-                    text: "Talk to Kael",
-                    nextScene: "puzzle_kael_talk"
-                }
-            ]
+            // No choices: continue free-roam until all anomalies are solved
         },
         
         // Puzzle 2: The Broken Sign
@@ -822,7 +800,7 @@ const synthyaStory = {
                 normal: "assets/images/characters/synthya/synthya-normal.png",
                 happy: "assets/images/characters/synthya/synthya-happy.png",
                 sad: "assets/images/characters/synthya/synthya-sad.png",
-                surprise: "assets/images/characters/synthya/synthya-suprise.png"
+                surprise: "assets/images/characters/synthya/synthya-surprise.png"
             }
         },
         kael: {
@@ -830,7 +808,7 @@ const synthyaStory = {
             images: {
                 normal: "assets/images/characters/kael/kael-normal.png",
                 happy: "assets/images/characters/kael/kael-happy.png",
-                surprise: "assets/images/characters/kael/kael-suprise.png",
+                surprise: "assets/images/characters/kael/kael-surprise.png",
                 think: "assets/images/characters/kael/kael-think.png"
             }
         },

@@ -362,6 +362,7 @@ body::after {
     width: 100vw;
     height: 100vh;
     position: relative;
+    z-index: 100;
 }
 
 .in-game-logo {

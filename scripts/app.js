@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let storyMode = false;
     let storyTriggered = false;
     
+    // Story walking state
+    let walkingToPuzzle = false;
+    let puzzleTarget = null;
+    let puzzleTargetScene = null;
+    
     // Puzzle discovery tracking
     let puzzlesDiscovered = {
         jukebox: false,
@@ -37,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // Define puzzle element positions and visual properties
-    const puzzleElements = {
+    let puzzleElements = {
         jukebox: { x: 1400, y: 380, width: 120, height: 200, range: 150 },
         neon_sign: { x: 750, y: 250, width: 200, height: 100, range: 150 },
         kael: { x: 400, y: 380, width: 100, height: 150, range: 150 }
@@ -82,14 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
             bg_middle: 'assets/images/backgrounds/bg-middle.png',
             bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
             broken_mug: 'assets/images/scenes/thebrokenmug.png',
-            jukebox: 'assets/images/scenes/jukebox.png'
+            jukebox: 'assets/images/scenes/jukebox.png',
+            neon_sign: 'assets/images/scenes/neon-sign.svg'
         };
         const promises = Object.entries(imageSources).map(([name, src]) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = src;
                 img.onload = () => {
-                    if (name.startsWith('bg_') || name === 'broken_mug' || name === 'jukebox') environment[name] = img;
+                    if (name.startsWith('bg_') || name === 'broken_mug' || name === 'jukebox' || name === 'neon_sign') environment[name] = img;
                     else if (name.includes('_sheet')) spriteSheets['synthya'] = img;
                     else if (name.startsWith('synthya_') || name.startsWith('kael_')) characterPortraits[name] = img;
                     resolve();
@@ -164,7 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.key === ' ' || e.key === 'Enter') {
                     if (miniGameSystem.gameComplete) {
                         miniGameSystem.endGame();
-                        if (dialogueSystem.currentScene) {
+                        // If current scene defines an onComplete transition, go there
+                        const currentScene = dialogueSystem.currentScene;
+                        if (currentScene && currentScene.minigame && currentScene.minigame.onComplete) {
+                            dialogueSystem.startScene(currentScene.minigame.onComplete);
+                        } else if (currentScene) {
+                            // Otherwise resume dialogue in the same scene
                             dialogueSystem.isActive = true;
                         }
                     }
@@ -179,13 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (keys[key] !== undefined) keys[key] = true;
         if ((key === 'w' || key === ' ') && isGrounded) { yVelocity = jumpPower; isGrounded = false; }
         
-        // Trigger story with 'E' key when near the bar
-        if (key === 'e' && !storyTriggered && localPlayerId && players[localPlayerId]) {
-            const player = players[localPlayerId];
-            // Check if player is in the bar area (left side of the world)
-            if (player.x < 800) {
-                startStory();
+        // Interact with 'E'
+        if (key === 'e' && localPlayerId && players[localPlayerId]) {
+            // Prefer using the interaction system if a prompt is active
+            if (interactionSystem && interactionSystem.interact()) {
+                return; // Consumed by interaction
             }
+            // No fallback auto-start; player must use visible interactions
         }
     });
     window.addEventListener('keyup', (e) => { 
@@ -199,148 +210,151 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = window.innerHeight;
     }
 
-    function gameLoop() {
-        // --- Player Logic ---
-        if (!storyMode && localPlayerId && players[localPlayerId]) {
+    // searchModeActive is patched onto dialogueSystem in connectToServer
+    function drawSceneObjects() {
+        const searchMode = window.searchModeActive;
+        const now = Date.now();
+        const pulse = (Math.sin(now / 400) + 1) / 2; // 0..1
+        // Jukebox
+        if (environment.jukebox && puzzleElements.jukebox) {
+            const j = puzzleElements.jukebox;
+            ctx.save();
+            // Ambient cue halo when searching for anomalies
+            if (searchMode) {
+                ctx.fillStyle = `rgba(0, 255, 255, ${0.12 + pulse * 0.15})`;
+                ctx.beginPath();
+                ctx.ellipse(j.x + j.width/2, j.y - j.height/2, j.width*0.8, j.height*0.7, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 6;
+            ctx.drawImage(environment.jukebox, j.x, j.y - j.height + 10, j.width, j.height);
+            ctx.restore();
+        }
+
+        // Neon sign
+        if (puzzleElements.neon_sign) {
+            const n = puzzleElements.neon_sign;
+            const signW = n.width;
+            const signH = n.height;
+            const signX = n.x - signW / 2;
+            const signY = n.y - signH;
+            ctx.save();
+            if (searchMode) {
+                ctx.fillStyle = `rgba(255, 0, 160, ${0.10 + pulse * 0.18})`;
+                ctx.fillRect(signX - 10, signY - 8, signW + 20, signH + 16);
+            }
+            ctx.shadowColor = '#ff00ff';
+            ctx.shadowBlur = 10;
+            if (environment.neon_sign) {
+                ctx.drawImage(environment.neon_sign, signX, signY, signW, signH);
+            } else {
+                // Fallback placeholder
+                ctx.strokeStyle = '#ff4de3';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(signX, signY, signW, signH);
+            }
+            ctx.restore();
+        }
+
+        // Kael NPC (use portrait as a stand-in)
+        if (characterPortraits.kael_normal && puzzleElements.kael) {
+            const k = puzzleElements.kael;
+            const img = characterPortraits.kael_normal;
+            // Maintain aspect ratio while fitting width
+            const aspect = img.width / img.height;
+            const drawW = k.width;
+            const drawH = Math.round(drawW / aspect);
+            const drawX = k.x - Math.round(drawW / 2);
+            const drawY = k.y - drawH;
+            ctx.save();
+            // Subtle cue during search
+            if (searchMode && !(puzzlesCompleted.jukebox && puzzlesCompleted.neon_sign)) {
+                ctx.fillStyle = `rgba(138, 43, 226, ${0.10 + pulse * 0.12})`;
+                ctx.beginPath();
+                ctx.ellipse(k.x, k.y - drawH/2, drawW*0.6, drawH*0.55, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.shadowColor = '#8a2be2';
+            ctx.shadowBlur = 10;
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+            ctx.restore();
+        }
+
+        // If in free-roam search mode, show a short hint above the player
+        if (!storyMode && window.searchModeActive && localPlayerId && players[localPlayerId]) {
             const player = players[localPlayerId];
-            let lastState = { ...player };
-            let lastFlip = flipH;
-
-            // Movement & World Bounds
-            if (keys.a) { player.x = Math.max(0, player.x - moveSpeed); flipH = true; }
-            if (keys.d) { player.x = Math.min(world.width - 64, player.x + moveSpeed); flipH = false; }
-
-            // Physics
-            yVelocity += gravity;
-            player.y += yVelocity;
-            const standardHeight = 700; // Increased sprite size
-            if (player.y > world.groundLevel - standardHeight) {
-                player.y = world.groundLevel - standardHeight;
-                yVelocity = 0; isGrounded = true;
-            }
-
-            // Animation
-            if (isGrounded) { player.animationState = (keys.a || keys.d) ? 'walking' : 'idle_front'; } else { player.animationState = 'action'; }
-
-            // Camera Follow
-            camera.x = player.x - (1920 / 2); // Center on a 1920px view
-            camera.x = Math.max(0, Math.min(camera.x, world.width - 1920)); // Clamp to world
-            
-            // Check for interactions
-            if (interactionSystem) {
-                interactionSystem.checkInteractions(player.x, player.y);
-            }
-
-            // Network Update
-            if (player.x !== lastState.x || player.y !== lastState.y || player.animationState !== lastState.animationState || flipH !== lastFlip) {
-                if (ws?.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'updateState', x: player.x, y: player.y, animationState: player.animationState, flipH: flipH }));
-                }
-            }
+            interactionSystem.renderChatBubble(player.x, player.y, 'Find the anomalies', 0, -140);
         }
-        
-        // Handle walking to puzzle elements during story mode
-        if (storyMode && walkingToPuzzle && localPlayerId && players[localPlayerId]) {
-            const player = players[localPlayerId];
-            const target = puzzleTarget;
-            
-            if (target) {
-                const distance = Math.abs(player.x - target.x);
-                
-                if (distance > 50) {
-                    // Keep walking towards target
-                    if (player.x < target.x) {
-                        player.x += moveSpeed;
-                        flipH = false;
-                    } else {
-                        player.x -= moveSpeed;
-                        flipH = true;
-                    }
-                    player.animationState = 'walking';
-                } else {
-                    // Reached target, start the scene
-                    walkingToPuzzle = false;
-                    player.animationState = 'idle_front';
-                    dialogueSystem.startScene(puzzleTargetScene);
-                    dialogueSystem.isActive = true;
-                    puzzleTarget = null;
-                    puzzleTargetScene = null;
-                }
-            }
-        }
-        
-        // Update story systems
-        if (storyMode) {
-            if (dialogueSystem) dialogueSystem.update();
-            if (miniGameSystem) miniGameSystem.update();
-        }
-
-        // --- Rendering ---
-        render();
-
-        // Animation Frame Update
-        frameCounter++;
-        if (frameCounter >= frameSpeed) { frameCounter = 0; animationFrame = (animationFrame + 1) % 3; }
-
-        requestAnimationFrame(gameLoop);
     }
 
-    // --- DEFINITIVE RENDER FUNCTION ---
-    function render() {
-        const gameWidth = 1920;
-        const gameHeight = 1080;
-        const scale = Math.min(canvas.width / gameWidth, canvas.height / gameHeight);
+    // Clear the entire canvas (draws black bars if needed)
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const renderWidth = gameWidth * scale;
-        const renderHeight = gameHeight * scale;
-        const offsetX = (canvas.width - renderWidth) / 2;
-        const offsetY = (canvas.height - renderHeight) / 2;
+    ctx.save();
+    // Translate and scale to create the letterbox effect
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
 
-        // Clear the entire canvas (draws black bars if needed)
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // --- Draw the world from the camera's perspective ---
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
 
-        ctx.save();
-        // Translate and scale to create the letterbox effect
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
-
-        // --- Draw the world from the camera's perspective ---
-        ctx.save();
-        ctx.translate(-camera.x, -camera.y);
-
-        // Draw Environment
-        if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-        // Position the bar scene to fill the screen - scale it up and position lower to cover bottom
-        if (environment.broken_mug) {
-            const barWidth = 1920;
-            const barHeight = 1400; // Taller to fill more of the screen
-            const barY = -200; // Position lower so bar fills bottom, only far bg visible at top
-            ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
-        }
-
-        // Draw Players
-        drawPlayers();
-
-        if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
-        
-        ctx.restore();
-        // --- End drawing the world ---
-        
-        // Draw story UI on top if active
-        if (storyMode) {
-            if (dialogueSystem && dialogueSystem.isActive) {
-                dialogueSystem.render(gameWidth, gameHeight);
-            } else if (miniGameSystem && miniGameSystem.isActive) {
-                miniGameSystem.render(gameWidth, gameHeight);
-            }
-        } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
-            // Show interaction prompts
-            interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
-        }
-
-        ctx.restore();
+    // Draw Environment
+    if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
+    // Position the bar scene to fill the screen - scale it up and position lower to cover bottom
+    if (environment.broken_mug) {
+        const barWidth = 1920;
+        const barHeight = 1400; // Taller to fill more of the screen
+        const barY = -200; // Position lower so bar fills bottom, only far bg visible at top
+        ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
     }
+
+    // Draw scene objects (jukebox, neon sign, Kael) so players render in front
+    drawSceneObjects();
+
+    // Draw Players
+    drawPlayers();
+
+    if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
+
+    // Subtle top vignette to reinforce "inside the bar" and hide any stray gaps
+    const grad = ctx.createLinearGradient(0, 0, 0, 220);
+    grad.addColorStop(0, 'rgba(0,0,0,0.85)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(camera.x, 0, 1920, 220);
+
+    // Ceiling beam overlay for extra interior depth
+    ctx.save();
+    const beamY = 80;
+    ctx.fillStyle = 'rgba(20, 12, 40, 0.9)';
+    ctx.fillRect(camera.x, beamY, 1920, 32);
+    // beam shading
+    const beamGrad = ctx.createLinearGradient(0, beamY, 0, beamY + 32);
+    beamGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
+    beamGrad.addColorStop(1, 'rgba(255,255,255,0.06)');
+    ctx.fillStyle = beamGrad;
+    ctx.fillRect(camera.x, beamY, 1920, 32);
+    ctx.restore();
+
+    ctx.restore();
+    // --- End drawing the world ---
+
+    // Draw story UI on top if active
+    if (storyMode) {
+        if (dialogueSystem && dialogueSystem.isActive) {
+            dialogueSystem.render(gameWidth, gameHeight);
+        } else if (miniGameSystem && miniGameSystem.isActive) {
+            miniGameSystem.render(gameWidth, gameHeight);
+        }
+    } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
+        // Show interaction prompts
+        interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
+    }
+
+    ctx.restore();
 
     function drawPlayers() {
         for (const id in players) {
@@ -360,42 +374,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 ctx.save();
                 ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
-                ctx.shadowBlur = 20;
-
-                if (player.flipH) {
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
-                } else {
-                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
-                }
+                ctx.shadowBlur = 8; // Lower blur for better performance
+                // Draw player sprite here (add your drawing logic as needed)
+                // Example:
+                // ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
                 ctx.restore();
-            }
         }
     }
-
     // --- WebSocket Connection ---
     async function connectToServer() {
         await preloadAssets();
         
-        // Initialize story systems
-        dialogueSystem = new DialogueSystem(canvas, ctx, synthyaStory);
-        miniGameSystem = new MiniGameSystem(canvas, ctx);
-        interactionSystem = new InteractionSystem(canvas, ctx);
-        
-        // Add interaction points
-        interactionSystem.addInteraction(300, 480, "The bartender seems busy...", () => {
-            startStory();
-        });
-        
-        // Define puzzle element positions in the bar
-        puzzleElements = {
-            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox', width: 100, height: 200, range: 50 },
-            sign: { x: 800, y: 480, scene: 'puzzle_sign', width: 80, height: 160, range: 40 },
-            kael: { x: 400, y: 480, scene: 'puzzle_kael_final', width: 90, height: 180, range: 45 }
+    // Initialize story systems
+            ctx.save();
+            // Ambient cue halo when searching for anomalies
+            if (window.searchModeActive) {
+                ctx.fillStyle = `rgba(0, 255, 255, ${0.12 + pulse * 0.15})`;
+                ctx.beginPath();
+                ctx.ellipse(j.x + j.width/2, j.y - j.height/2, j.width*0.8, j.height*0.7, 0, 0, Math.PI*2);
+        // Patch startScene to track scene transitions and update puzzle flags
+        const originalStartScene = dialogueSystem.startScene.bind(dialogueSystem);
+        window.searchModeActive = false;
+        dialogueSystem.startScene = (sceneId) => {
+            originalStartScene(sceneId);
+            // Update discovery/completion flags based on scene transitions
+            if (sceneId === 'puzzle_jukebox') {
+                puzzlesDiscovered.jukebox = true;
+            } else if (sceneId === 'puzzle_sign') {
+                puzzlesDiscovered.neon_sign = true;
+            } else if (sceneId === 'jukebox_solved') {
+                puzzlesCompleted.jukebox = true;
+            } else if (sceneId === 'sign_solved') {
+                puzzlesCompleted.neon_sign = true;
+            } else if (sceneId === 'puzzle_kael_final') {
+                puzzlesDiscovered.kael = true;
+            }
+            // Toggle free-roam search mode
+            if (sceneId === 'escape_room_hub' || sceneId === 'escape_room_hub_2') {
+                // End of overlay after these scenes will drop back to free roam
+                window.searchModeActive = true;
+            } else if (sceneId === 'puzzle_jukebox' || sceneId === 'puzzle_sign' || sceneId === 'puzzle_kael_final') {
+                window.searchModeActive = false;
+            }
         };
-        
+                    storyTriggered = true;
+                    dialogueSystem.startScene('broken_mug_loop_start');
+                } else if (puzzlesCompleted.jukebox && puzzlesCompleted.neon_sign) {
+                    dialogueSystem.startScene('puzzle_kael_final');
+                } else {
+                    dialogueSystem.startScene('puzzle_kael_talk');
+                }
         return new Promise((resolve) => {
-            ws = new WebSocket('ws://localhost:8080');
+            // The following WebSocket URL assumes the WebSocket server runs on the same host and port as the web server.
+            // If deploying with a separate WebSocket server, update 'window.location.host' to the appropriate host:port.
+            // Example: const wsUrl = 'ws://your-websocket-server:port';
+                        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                        const wsUrl = `${wsProtocol}//${window.location.host}`;
+                        ws = new WebSocket(wsUrl);
             ws.onopen = () => { console.log('[Client] Connected.'); gameLoop(); resolve(); };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
@@ -457,4 +492,18 @@ document.addEventListener('DOMContentLoaded', () => {
             dialogueSystem.startScene(sceneId);
         }
     }
+
+    // Ensure story mode is enabled and player input is paused
+    function ensureStoryMode() {
+        if (!storyMode) {
+            storyMode = true;
+        }
+        keys.a = false;
+        keys.d = false;
+        keys.w = false;
+        keys.s = false;
+        keys[' '] = false;
+    }
+// End of DOMContentLoaded
+}
 });
