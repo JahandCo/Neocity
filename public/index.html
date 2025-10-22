@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEOCITY</title>
+    <link rel="icon" href="../assets/images/techlogo-1.png">
+    <link rel="stylesheet" href="../assets/style.css">
+    <link rel="stylesheet" href="../assets/css/menu.css">
+    <link rel="stylesheet" href="../assets/css/character-select.css">
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="screen">
+        <img src="../assets/images/neocitylogo-1.png" alt="NEOCITY Logo" class="logo">
+        <h1>NEOCITY</h1>
+        <div class="menu-buttons">
+            <button id="story-btn">Story</button>
+            <button id="sin-chambers-btn">Sin-Chambers</button>
+            <button id="see-the-grid-btn">See the Grid</button>
+            <button id="about-btn">About</button>
+        </div>
+        <audio id="menu-audio" src="../assets/audio/menu.mp3" loop></audio>
+    </div>
+
+    <!-- CHARACTER SELECT SCREEN -->
+    <div id="character-select-screen" class="screen" style="display: none;">
+        <button id="back-to-menu-btn">Back to Menu</button>
+        <h2>Choose Your Story</h2>
+        <div class="character-selection-container">
+            <div class="character-grid">
+            <div class="char-card" data-char="synthya" data-img="../assets/images/characters/synthya/synthya.png" 
+                data-info="A digital archaeologist who weaves through forgotten memories in The Grid. Synthya specializes in data recovery and memory restoration, able to reconstruct lost fragments of consciousness.">
+                <img src="../assets/images/characters/synthya/synthya.png" alt="Synthya">
+                <h3>Synthya</h3>
+                <p>The Memory Weaver</p>
+            </div>
+            <div class="char-card" data-char="rune" data-img="../assets/images/characters/rune/rune.png"
+                data-info="A notorious infiltrator of corporate systems. Rune breaks through digital firewalls and encryptions with ease, exposing secrets hidden in the deepest layers of The Grid.">
+                <img src="../assets/images/characters/rune/rune.png" alt="Rune">
+                <h3>Rune</h3>
+                <p>The Hacker</p>
+            </div>
+            <div class="char-card" data-char="kael" data-img="../assets/images/characters/kael/kael.png"
+                data-info="A brilliant engineer who builds and modifies Echo hardware. Kael crafts custom cybernetic enhancements and experimental tech from salvaged Grid components.">
+                <img src="../assets/images/characters/kael/kael.png" alt="Kael">
+                <h3>Kael</h3>
+                <p>The Tech-Tinkerer</p>
+            </div>
+            <div class="char-card" data-char="echo" data-img="../assets/images/characters/echo/echo.png"
+                data-info="A sonic manipulator who transforms digital soundwaves into powerful tools. Echo crafts audio signatures that can unlock doors, disable security, or create mesmerizing performances.">
+                <img src="../assets/images/characters/echo/echo.png" alt="Echo">
+                <h3>Echo</h3>
+                <p>The Sound Weaver</p>
+            </div>
+            <div class="char-card" data-char="vesper" data-img="../assets/images/characters/vesper/vesper.png"
+                data-info="A stealth specialist who moves unseen through The Grid's shadows. Vesper excels at reconnaissance, data theft, and navigating the most dangerous zones undetected.">
+                <img src="../assets/images/characters/vesper/vesper.png" alt="Vesper">
+                <h3>Vesper</h3>
+                <p>The Ghost Runner</p>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME APP CONTAINER -->
+    <div id="app-container" style="display: none;">
+        <img src="../assets/images/neocitylogo-2.png" alt="NEOCITY Logo" class="in-game-logo">
+        <canvas id="game-canvas"></canvas>
+        <audio id="game-audio" src="../assets/audio/game.mp3" loop></audio>
+    </div>
+
+    <script src="../scripts/storyData.js"></script>
+    <script src="../scripts/dialogueSystem.js"></script>
+    <script src="../scripts/miniGames.js"></script>
+    <script src="../scripts/interactionSystem.js"></script>
+    <script src="../scripts/app.js"></script>
+    <script src="../scripts/menu.js"></script>
+    <script src="../scripts/character-select.js"></script>
+</body>
+</html>

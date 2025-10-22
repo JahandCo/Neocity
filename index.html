@@ -1,82 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEOCITY</title>
-    <link rel="icon" href="assets/images/techlogo-1.png">
-    <link rel="stylesheet" href="assets/style.css">
-    <link rel="stylesheet" href="assets/css/menu.css">
-    <link rel="stylesheet" href="assets/css/character-select.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jah and Co Tech | Dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Add Fredoka font -->
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Styles from testing_studio.html -->
+<style>
+  :root {
+    --primary-blue: #00bfff;
+    --light-blue: #7DF9FF;
+    --neon-purple: #be00ff;
+    --neon-pink: #ff007f;
+    --neon-white: #ffffff;
+    --deep-blue: #1e3a8a;
+    --bg-dark: #020412;
+    --card-bg: rgba(10, 25, 47, 0.85);
+  }
+  
+  /* Animated gradient background */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient( 60deg, var(--bg-dark) 0%, var(--neon-purple) 30%, var(--neon-pink) 70%, var(--primary-blue) 100% );
+    background-size: 400% 400%;
+    animation: gradient-scroll 15s ease infinite;
+    z-index: -2;
+    opacity: 0.15;
+  }
+  @keyframes gradient-scroll {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Loading Overlay */
+  #loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-dark);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1s ease-out;
+  }
+  #loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .loading-title {
+    font-size: clamp(3rem, 12vw, 7rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    color: var(--neon-white);
+    animation: text-glow-loader 2s infinite alternate ease-in-out;
+  }
+  @keyframes text-glow-loader {
+    from { text-shadow: 0 0 5px var(--neon-white), 0 0 10px var(--primary-blue), 0 0 15px var(--primary-blue); }
+    to { text-shadow: 0 0 10px var(--neon-white), 0 0 18px var(--primary-blue), 0 0 25px var(--primary-blue); }
+  }
+  #enter-button {
+    display: inline-block;
+    margin-top: 40px;
+    padding: 15px 35px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    color: var(--neon-white);
+    background-color: transparent;
+    border: 2px solid var(--primary-blue);
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--primary-blue), inset 0 0 8px var(--primary-blue);
+    transition: all 0.3s ease;
+  }
+  #enter-button:hover {
+    background-color: var(--primary-blue);
+    color: var(--bg-dark);
+    transform: scale(1.05);
+  }
+
+  /* Main content visibility */
+  #main-content {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s ease-in;
+  }
+  #main-content.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Neon flicker animation */
+  @keyframes neon-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      text-shadow: 0 0 2px var(--neon-white), 0 0 5px var(--neon-white), 0 0 10px var(--neon-white), 0 0 20px var(--primary-blue), 0 0 35px var(--primary-blue);
+    }
+    20%, 24%, 55% {
+      text-shadow: none;
+    }
+  }
+</style>
+<style>
+  /* Using @apply for base styles to keep HTML cleaner */
+  body {
+    /* Use Fredoka font and dark background */
+    font-family: 'Fredoka', sans-serif;
+    background: var(--bg-dark);
+    color: var(--neon-white);
+  }
+  .particle-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+  /* Custom card class (Tailwind) */
+  .app-card {
+    background-color: rgba(23, 42, 69, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid #2a4162;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transition: all 300ms ease-in-out;
+  }
+  .app-card:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 25px 50px -12px rgba(112, 26, 117, 0.5);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+  /* Custom button class (Tailwind) */
+  .cta-button {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background-color: #9333ea;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 300ms ease-in-out;
+  }
+  .cta-button:hover {
+    background-color: #a855f7;
+    box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.5);
+    transform: translateY(-0.125rem);
+  }
+  /* New outline button for Gemini feature */
+  /* Removing .cta-button-outline */
+  /* Removing .loader */
+</style>
+<script>
+  // Configuration for Tailwind CSS
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'navy-900': '#0a192f', // Deep navy background
+          'navy-800': '#112240', // Lighter navy
+          'navy-700': '#172a45', // Card background
+          'navy-600': '#2a4162', // Borders
+          'text-light': '#e2e8f0', // Light text
+          'text-dark': '#94a3b8',  // Darker text (subtitles)
+        }
+      }
+    }
+  }
+</script>
 </head>
-<body>
-    <canvas id="particle-canvas"></canvas>
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="screen">
-        <img src="assets/images/neocitylogo-1.png" alt="NEOCITY Logo" class="logo">
-        <h1>NEOCITY</h1>
-        <div class="menu-buttons">
-            <button id="story-btn">Story</button>
-            <button id="sin-chambers-btn">Sin-Chambers</button>
-            <button id="see-the-grid-btn">See the Grid</button>
-            <button id="about-btn">About</button>
+<!-- Removed bg-navy-900, background is set in CSS -->
+<body class="text-text-light antialiased">
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+      <h1 class="loading-title">Jah and Co.</h1>
+      <button id="enter-button">Enter</button>
+  </div>
+
+  <!-- Main Content Wrapper -->
+  <main id="main-content">
+    <!-- Particle background canvas -->
+    <canvas id="particle-canvas" class="particle-bg"></canvas>
+
+    <div class="relative z-10 min-h-screen flex flex-col">
+      
+      <!-- Header -->
+      <header class="w-full">
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+          <!-- Logo/Title -->
+          <h1 class="text-2xl font-bold text-white">
+            Jah and Co Tech <span class="text-purple-400">| Dev</span>
+          </h1>
+          <!-- Navigation Links -->
+          <div>
+            <a href="#" class="text-text-dark hover:text-purple-400 transition-colors duration-200 px-4 py-2 rounded-md">Support</a>
+            <a href="#" class="text-text-dark hover:text-purple-400 transition-colors duration-200 px-4 py-2 rounded-md">Docs</a>
+          </div>
+        </nav>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-grow flex items-center justify-center py-12 md:py-24">
+        <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          
+          <!-- App Card -->
+          <div class="app-card max-w-2xl mx-auto overflow-hidden">
+            <div class="p-8 md:p-12 text-center">
+              
+              <!-- App Title -->
+              <!-- Added neon-flicker animation and removed title-glow class -->
+              <h2 class="text-4xl md:text-5xl font-bold text-white" style="animation: neon-flicker 4s infinite alternate;">
+                Neocity 
+                <span class="text-purple-400 block md:inline">| Development</span>
+              </h2>
+              
+              <!-- App Subtext -->
+              <p class="mt-4 text-lg md:text-xl text-text-dark font-medium tracking-wide">
+                Early Access Testing
+              </p>
+
+              <!-- Image Placeholder -->
+              <div class="w-full h-48 md:h-64 bg-navy-800/80 border-2 border-dashed border-navy-600 rounded-lg flex items-center justify-center my-8 md:my-12">
+                <span class="text-text-dark italic">App Image Placeholder (16:9)</span>
+              </div>
+              
+              <!-- Call to Action Buttons -->
+              <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="public/index.html" class="cta-button">
+                  Launch App
+                </a>
+                <!-- New Gemini API Button -->
+                <!-- Removing Gemini Button -->
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="w-full py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-text-dark">
+          <p>Support: <a href="mailto:support@jahandco.tech" class="hover:text-purple-400 transition-colors duration-200">support@jahandco.tech</a></p>
+          <p class="mt-2">&copy; <span id="current-year"></span> Jah and Co Tech. All rights reserved.</p>
         </div>
-        <audio id="menu-audio" src="assets/audio/menu.mp3" loop></audio>
+      </footer>
     </div>
+  </main> <!-- End Main Content Wrapper -->
 
-    <!-- CHARACTER SELECT SCREEN -->
-    <div id="character-select-screen" class="screen" style="display: none;">
-        <button id="back-to-menu-btn">Back to Menu</button>
-        <h2>Choose Your Story</h2>
-        <div class="character-selection-container">
-            <div class="character-grid">
-            <div class="char-card" data-char="synthya" data-img="assets/images/characters/synthya/synthya.png" 
-                data-info="A digital archaeologist who weaves through forgotten memories in The Grid. Synthya specializes in data recovery and memory restoration, able to reconstruct lost fragments of consciousness.">
-                <img src="assets/images/characters/synthya/synthya.png" alt="Synthya">
-                <h3>Synthya</h3>
-                <p>The Memory Weaver</p>
-            </div>
-            <div class="char-card" data-char="rune" data-img="assets/images/characters/rune/rune.png"
-                data-info="A notorious infiltrator of corporate systems. Rune breaks through digital firewalls and encryptions with ease, exposing secrets hidden in the deepest layers of The Grid.">
-                <img src="assets/images/characters/rune/rune.png" alt="Rune">
-                <h3>Rune</h3>
-                <p>The Hacker</p>
-            </div>
-            <div class="char-card" data-char="kael" data-img="assets/images/characters/kael/kael.png"
-                data-info="A brilliant engineer who builds and modifies Echo hardware. Kael crafts custom cybernetic enhancements and experimental tech from salvaged Grid components.">
-                <img src="assets/images/characters/kael/kael.png" alt="Kael">
-                <h3>Kael</h3>
-                <p>The Tech-Tinkerer</p>
-            </div>
-            <div class="char-card" data-char="echo" data-img="assets/images/characters/echo/echo.png"
-                data-info="A sonic manipulator who transforms digital soundwaves into powerful tools. Echo crafts audio signatures that can unlock doors, disable security, or create mesmerizing performances.">
-                <img src="assets/images/characters/echo/echo.png" alt="Echo">
-                <h3>Echo</h3>
-                <p>The Sound Weaver</p>
-            </div>
-            <div class="char-card" data-char="vesper" data-img="assets/images/characters/vesper/vesper.png"
-                data-info="A stealth specialist who moves unseen through The Grid's shadows. Vesper excels at reconnaissance, data theft, and navigating the most dangerous zones undetected.">
-                <img src="assets/images/characters/vesper/vesper.png" alt="Vesper">
-                <h3>Vesper</h3>
-                <p>The Ghost Runner</p>
-            </div>
-            </div>
-        </div>
-    </div>
+  <!-- Gemini Modal -->
+  <!-- Removing Gemini Modal -->
 
-    <!-- GAME APP CONTAINER -->
-    <div id="app-container" style="display: none;">
-        <img src="assets/images/neocitylogo-2.png" alt="NEOCITY Logo" class="in-game-logo">
-        <canvas id="game-canvas"></canvas>
-        <audio id="game-audio" src="assets/audio/game.mp3" loop></audio>
-    </div>
 
-    <script src="scripts/storyData.js"></script>
-    <script src="scripts/dialogueSystem.js"></script>
-    <script src="scripts/miniGames.js"></script>
-    <script src="scripts/interactionSystem.js"></script>
-    <script src="scripts/app.js"></script>
-    <script src="scripts/menu.js"></script>
-    <script src="scripts/character-select.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- Loading Overlay Script ---
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const enterButton = document.getElementById('enter-button');
+      const mainContent = document.getElementById('main-content');
+      
+      enterButton.addEventListener('click', () => {
+          loadingOverlay.classList.add('hidden');
+          mainContent.classList.add('visible');
+          loadingOverlay.addEventListener('transitionend', () => {
+              loadingOverlay.style.display = 'none';
+          }, { once: true });
+      });
+      // --- End Loading Overlay Script ---
+
+      // Set current year in footer
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+
+      // --- Particle background script (unchanged) ---
+      const canvas = document.getElementById('particle-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        let particlesArray;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        class Particle {
+          constructor(x, y, dirX, dirY, size, color) {
+            this.x = x; this.y = y; this.directionX = dirX; this.directionY = dirY; this.size = size; this.color = color;
+          }
+          draw() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); ctx.fillStyle = this.color; ctx.fill();
+          }
+          update() {
+            if (this.x > canvas.width || this.x < 0) { this.directionX = -this.directionX; }
+            if (this.y > canvas.height || this.y < 0) { this.directionY = -this.directionY; }
+            this.x += this.directionX; this.y += this.directionY;
+            this.draw();
+          }
+        }
+        function init() {
+          particlesArray = [];
+          let numberOfParticles = (canvas.height * canvas.width) / 9000;
+          for (let i = 0; i < numberOfParticles; i++) {
+            let size = (Math.random() * 2) + 1; 
+            let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+            let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+            let dirX = (Math.random() * 0.4) - 0.2;
+            let dirY = (Math.random() * 0.4) - 0.2;
+            let color = i % 2 === 0 ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 191, 255, 0.7)';
+            particlesArray.push(new Particle(x, y, dirX, dirY, size, color));
+          }
+        }
+        function animate() {
+          requestAnimationFrame(animate);
+          ctx.clearRect(0, 0, innerWidth, innerHeight);
+          for (let i = 0; i < particlesArray.length; i++) { particlesArray[i].update(); }
+        }
+        window.addEventListener('resize', () => {
+          canvas.width = innerWidth; canvas.height = innerHeight; init();
+        });
+        init();
+        animate();
+      }
+      // --- End Particle Script ---
+
+
+      // --- Gemini API Modal Script ---
+      // Removing entire Gemini API Modal Script
+    });
+  </script>
+
 </body>
 </html>
+
