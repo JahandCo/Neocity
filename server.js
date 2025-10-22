@@ -52,7 +52,7 @@ const wss = new WebSocket.Server({ server });
 const players = new Map();
 
 // Start the server
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Neocity server started on port ${PORT}...`);
 });

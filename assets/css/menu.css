@@ -6,66 +6,208 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(10, 10, 30, 0.9); /* Dark, semi-transparent background */
-    border: 2px solid #00ffff; /* Cyan border */
-    box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); /* Cyan glow */
-    color: #00ffff; /* Cyan text */
+    background: transparent;
+    color: #00ffff;
     font-family: 'Courier New', monospace;
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 2;
+    z-index: 1;
 }
 
 /* Canvas for particle effects */
 #particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+
+
+/* Login screen with custom background */
+#login-screen {
+    background: linear-gradient(135deg, 
+        #000080 0%,    /* Navy blue */
+        #4b0082 50%,   /* Dark purple */
+        #000080 100%   /* Navy blue */
+    );
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated grid overlay */
+#login-screen::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: 
+        linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent);
+    background-size: 80px 80px;
+    animation: gridMove 20s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Scanline effect */
+#login-screen::after {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 255, 255, 0) 0%,
+        rgba(0, 255, 255, 0.03) 50%,
+        rgba(0, 255, 255, 0) 100%
+    );
+    background-size: 100% 4px;
+    animation: scanline 8s linear infinite;
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* Hide character select screen initially */
 #character-select-screen {
     display: none;
+    background: linear-gradient(135deg, 
+        #36454f 0%,    /* Charcoal gray */
+        #000080 50%,   /* Navy blue */
+        #36454f 100%   /* Charcoal gray */
+    );
 }
 
 /* Menu logo */
 .logo {
-    width: 200px;
-    margin-bottom: 40px;
-    animation: float 4s ease-in-out infinite;
+    width: 450px;
+    height: auto;
+    margin-bottom: 50px;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
 }
 
 /* Menu buttons container */
 .menu-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    max-width: 700px;
+    position: relative;
+    z-index: 10;
+}
+
+/* Shining swipe effect for logo */
+.logo::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -150%;
+    width: 80%;
+    height: 200%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.9) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.logo.shine::after {
+    animation: logoShine 0.8s ease-out;
+}
+
+/* Menu buttons container */
+.menu-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    max-width: 700px;
 }
 
 /* General button style */
 .menu-buttons button, #back-to-menu-btn {
-    background: transparent;
-    border: 2px solid #00ffff;
-    color: #00ffff;
-    padding: 15px 30px;
+    background: rgba(0, 0, 50, 0.4);
+    border: 2px solid #000080;
+    color: #ffffff;
+    padding: 20px 40px;
     font-size: 18px;
     font-family: 'Courier New', monospace;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 128, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+    animation: borderShift 4s ease infinite;
+}
+
+@keyframes borderShift {
+    0%, 100% {
+        border-color: #000080;
+    }
+    50% {
+        border-color: #ffffff;
+    }
+}
+
+/* Circuit effect overlay on buttons */
+.menu-buttons button::before, #back-to-menu-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.3), 
+        transparent);
+    transition: left 0.5s;
 }
 
 /* Button hover effect */
 .menu-buttons button:hover, #back-to-menu-btn:hover {
-    background: #00ffff;
-    color: #000;
-    box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    background: rgba(0, 0, 80, 0.6);
+    color: #fff;
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.4),
+                0 0 50px rgba(255, 255, 255, 0.3),
+                inset 0 0 30px rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.menu-buttons button:hover::before, #back-to-menu-btn:hover::before {
+    left: 100%;
+}
+
+/* Button active/click effect */
+.menu-buttons button:active, #back-to-menu-btn:active {
+    transform: scale(0.98);
+    background: rgba(0, 0, 100, 0.8);
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.6),
+                0 0 70px rgba(255, 255, 255, 0.4),
+                inset 0 0 40px rgba(255, 255, 255, 0.2);
 }
 
 /* Back to menu button positioning */
@@ -76,12 +218,42 @@
 }
 
 /* Keyframe animations */
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
+@keyframes logoShine {
+    0% {
+        left: -150%;
+    }
+    100% {
+        left: 150%;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
     }
     50% {
-        transform: translateY(-20px);
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate(80px, 80px) rotate(0deg);
+    }
+}
+
+@keyframes scanline {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100vh);
     }
 }
 
@@ -96,7 +268,11 @@
 
 /* Add a title to the menu */
 #login-screen h1 {
-    font-size: 48px;
-    margin-bottom: 30px;
-    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    font-size: 56px;
+    margin-bottom: 40px;
+    text-shadow: 0 0 15px #00ffff, 
+                 0 0 30px #00ffff,
+                 0 0 45px #00ffff;
+    letter-spacing: 8px;
+    display: none; /* Hide since logo is primary focus */
 }

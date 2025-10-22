@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     backToMenuBtn.addEventListener('click', () => {
         charSelectScreen.style.display = 'none';
         loginScreen.style.display = 'flex';
+        // Show particle canvas again
+        const particleCanvas = document.getElementById('particle-canvas');
+        if (particleCanvas) particleCanvas.style.display = 'block';
     });
 
     charCards.forEach(card => {

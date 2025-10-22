@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="160" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="glow1"/>
+      <feGaussianBlur stdDeviation="6" result="glow2"/>
+      <feMerge>
+        <feMergeNode in="glow2"/>
+        <feMergeNode in="glow1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="tube" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff66cc"/>
+      <stop offset="100%" stop-color="#ff99ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="380" height="140" rx="12" ry="12" fill="rgba(0,0,0,0.1)" stroke="#ff66cc" stroke-width="3" filter="url(#neon)" />
+  <g filter="url(#neon)">
+    <text x="200" y="70" text-anchor="middle" font-family="'Courier New', monospace" font-weight="700" font-size="38" fill="url(#tube)">BROKEN</text>
+    <text x="200" y="120" text-anchor="middle" font-family="'Courier New', monospace" font-weight="700" font-size="38" fill="url(#tube)">MUG</text>
+  </g>
+</svg>
