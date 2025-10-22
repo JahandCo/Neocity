@@ -22,10 +22,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let interactionSystem = null;
     let storyMode = false;
     let storyTriggered = false;
-    let walkingToPuzzle = false;
-    let puzzleTarget = null;
-    let puzzleTargetScene = null;
-    let puzzleElements = {};
+    
+    // Puzzle discovery tracking
+    let puzzlesDiscovered = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    let puzzlesCompleted = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    // Define puzzle element positions and visual properties
+    const puzzleElements = {
+        jukebox: { x: 1400, y: 380, width: 120, height: 200, range: 150 },
+        neon_sign: { x: 750, y: 250, width: 200, height: 100, range: 150 },
+        kael: { x: 400, y: 380, width: 100, height: 150, range: 150 }
+    };
 
     // --- World & Dimensional Standards ---
     const world = {
@@ -57,10 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
             synthya_normal: 'assets/images/characters/synthya/synthya-normal.png',
             synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
             synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
-            synthya_surprise: 'assets/images/characters/synthya/synthya-suprise.png',
+            synthya_surprise: 'assets/images/characters/synthya/synthya-surprise.png',
             kael_normal: 'assets/images/characters/kael/kael-normal.png',
             kael_happy: 'assets/images/characters/kael/kael-happy.png',
-            kael_surprise: 'assets/images/characters/kael/kael-suprise.png',
+            kael_surprise: 'assets/images/characters/kael/kael-surprise.png',
             kael_think: 'assets/images/characters/kael/kael-think.png',
             bg_far: 'assets/images/backgrounds/bg-far.png',
             bg_middle: 'assets/images/backgrounds/bg-middle.png',
@@ -373,9 +389,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Define puzzle element positions in the bar
         puzzleElements = {
-            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox' },
-            sign: { x: 800, y: 480, scene: 'puzzle_sign' },
-            kael: { x: 400, y: 480, scene: 'puzzle_kael_final' }
+            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox', width: 100, height: 200, range: 50 },
+            sign: { x: 800, y: 480, scene: 'puzzle_sign', width: 80, height: 160, range: 40 },
+            kael: { x: 400, y: 480, scene: 'puzzle_kael_final', width: 90, height: 180, range: 45 }
         };
         
         return new Promise((resolve) => {
@@ -426,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sceneId === 'puzzle_jukebox') {
             targetElement = puzzleElements.jukebox;
         } else if (sceneId === 'puzzle_sign') {
-            targetElement = puzzleElements.sign;
+            targetElement = puzzleElements.neon_sign;
         } else if (sceneId === 'puzzle_kael_final') {
             targetElement = puzzleElements.kael;
         }
