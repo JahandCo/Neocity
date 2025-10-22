@@ -210,6 +210,209 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = window.innerHeight;
     }
 
+    function gameLoop() {
+        // --- Player Logic ---
+        if (!storyMode && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            let lastState = { ...player };
+            let lastFlip = flipH;
+
+            // Movement & World Bounds
+            if (keys.a) { player.x = Math.max(0, player.x - moveSpeed); flipH = true; }
+            if (keys.d) { player.x = Math.min(world.width - 64, player.x + moveSpeed); flipH = false; }
+
+            // Physics
+            yVelocity += gravity;
+            player.y += yVelocity;
+            const standardHeight = 700;
+            if (player.y > world.groundLevel - standardHeight) {
+                player.y = world.groundLevel - standardHeight;
+                yVelocity = 0; isGrounded = true;
+            }
+
+            // Animation
+            if (isGrounded) { player.animationState = (keys.a || keys.d) ? 'walking' : 'idle_front'; } else { player.animationState = 'action'; }
+
+            // Camera Follow
+            camera.x = player.x - (1920 / 2);
+            camera.x = Math.max(0, Math.min(camera.x, world.width - 1920));
+            
+            // Check for interactions
+            if (interactionSystem) {
+                interactionSystem.checkInteractions(player.x, player.y);
+            }
+
+            // Network Update
+            if (player.x !== lastState.x || player.y !== lastState.y || player.animationState !== lastState.animationState || flipH !== lastFlip) {
+                if (ws?.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'updateState', x: player.x, y: player.y, animationState: player.animationState, flipH: flipH }));
+                }
+            }
+        }
+        
+        // Handle walking to puzzle elements during story mode
+        if (storyMode && walkingToPuzzle && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            const target = puzzleTarget;
+            
+            if (target) {
+                const distance = Math.abs(player.x - target.x);
+                
+                if (distance > 50) {
+                    if (player.x < target.x) {
+                        player.x += moveSpeed;
+                        flipH = false;
+                    } else {
+                        player.x -= moveSpeed;
+                        flipH = true;
+                    }
+                    player.animationState = 'walking';
+                } else {
+                    walkingToPuzzle = false;
+                    player.animationState = 'idle_front';
+                    dialogueSystem.startScene(puzzleTargetScene);
+                    dialogueSystem.isActive = true;
+                    puzzleTarget = null;
+                    puzzleTargetScene = null;
+                }
+            }
+        }
+        
+        // Update story systems
+        if (storyMode) {
+            if (dialogueSystem) dialogueSystem.update();
+            if (miniGameSystem) miniGameSystem.update();
+        }
+
+        // --- Rendering ---
+        render();
+
+        // Animation Frame Update
+        frameCounter++;
+        if (frameCounter >= frameSpeed) { frameCounter = 0; animationFrame = (animationFrame + 1) % 3; }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // --- DEFINITIVE RENDER FUNCTION ---
+    function render() {
+        const gameWidth = 1920;
+        const gameHeight = 1080;
+        const scale = Math.min(canvas.width / gameWidth, canvas.height / gameHeight);
+
+        const renderWidth = gameWidth * scale;
+        const renderHeight = gameHeight * scale;
+        const offsetX = (canvas.width - renderWidth) / 2;
+        const offsetY = (canvas.height - renderHeight) / 2;
+
+        // Clear the entire canvas (draws black bars if needed)
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        // Translate and scale to create the letterbox effect
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+
+        // --- Draw the world from the camera's perspective ---
+        ctx.save();
+        ctx.translate(-camera.x, -camera.y);
+
+        // --- Draw the world from the camera's perspective ---
+        ctx.save();
+        ctx.translate(-camera.x, -camera.y);
+
+        // Draw Environment
+        if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080);
+        if (environment.broken_mug) {
+            const barWidth = 1920;
+            const barHeight = 1400;
+            const barY = -200;
+            ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
+        }
+
+        // Draw scene objects (jukebox, neon sign, Kael) so players render in front
+        drawSceneObjects();
+
+        // Draw Players
+        drawPlayers();
+
+        // If in free-roam search mode, show a short hint above the player
+        if (!storyMode && window.searchModeActive && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            interactionSystem.renderChatBubble(player.x, player.y, 'Find the anomalies', 0, -140);
+        }
+
+        if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
+        
+        // Subtle top vignette to reinforce "inside the bar" and hide any stray gaps
+        const grad = ctx.createLinearGradient(0, 0, 0, 220);
+        grad.addColorStop(0, 'rgba(0,0,0,0.85)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(camera.x, 0, 1920, 220);
+
+        // Ceiling beam overlay for extra interior depth
+        ctx.save();
+        const beamY = 80;
+        ctx.fillStyle = 'rgba(20, 12, 40, 0.9)';
+        ctx.fillRect(camera.x, beamY, 1920, 32);
+        const beamGrad = ctx.createLinearGradient(0, beamY, 0, beamY + 32);
+        beamGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
+        beamGrad.addColorStop(1, 'rgba(255,255,255,0.06)');
+        ctx.fillStyle = beamGrad;
+        ctx.fillRect(camera.x, beamY, 1920, 32);
+        ctx.restore();
+        
+        ctx.restore();
+        // --- End drawing the world ---
+        
+        // Draw story UI on top if active
+        if (storyMode) {
+            if (dialogueSystem && dialogueSystem.isActive) {
+                dialogueSystem.render(gameWidth, gameHeight);
+            } else if (miniGameSystem && miniGameSystem.isActive) {
+                miniGameSystem.render(gameWidth, gameHeight);
+            }
+        } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
+            // Show interaction prompts
+            interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
+        }
+
+        ctx.restore();
+    }
+
+    function drawPlayers() {
+        for (const id in players) {
+            const player = players[id];
+            if (player.character && spriteSheets[player.character]) {
+                const sheet = spriteSheets[player.character];
+                const frameInfo = spriteFrames[player.character];
+                const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
+                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
+                const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
+                const frameX = frame.x * frameInfo.frameWidth;
+
+                const standardHeight = 700;
+                const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
+                const drawHeight = standardHeight;
+                const drawWidth = standardHeight * aspectRatio;
+
+                ctx.save();
+                ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
+                ctx.shadowBlur = 8;
+
+                if (player.flipH) {
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, -player.x - drawWidth, player.y, drawWidth, drawHeight);
+                } else {
+                    ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
+                }
+                ctx.restore();
+            }
+        }
+    }
+
     // searchModeActive is patched onto dialogueSystem in connectToServer
     function drawSceneObjects() {
         const searchMode = window.searchModeActive;
@@ -280,107 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.drawImage(img, drawX, drawY, drawW, drawH);
             ctx.restore();
         }
-
-        // If in free-roam search mode, show a short hint above the player
-        if (!storyMode && window.searchModeActive && localPlayerId && players[localPlayerId]) {
-            const player = players[localPlayerId];
-            interactionSystem.renderChatBubble(player.x, player.y, 'Find the anomalies', 0, -140);
-        }
     }
 
-    // Clear the entire canvas (draws black bars if needed)
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    // Translate and scale to create the letterbox effect
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
-
-    // --- Draw the world from the camera's perspective ---
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-
-    // Draw Environment
-    if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-    // Position the bar scene to fill the screen - scale it up and position lower to cover bottom
-    if (environment.broken_mug) {
-        const barWidth = 1920;
-        const barHeight = 1400; // Taller to fill more of the screen
-        const barY = -200; // Position lower so bar fills bottom, only far bg visible at top
-        ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
-    }
-
-    // Draw scene objects (jukebox, neon sign, Kael) so players render in front
-    drawSceneObjects();
-
-    // Draw Players
-    drawPlayers();
-
-    if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
-
-    // Subtle top vignette to reinforce "inside the bar" and hide any stray gaps
-    const grad = ctx.createLinearGradient(0, 0, 0, 220);
-    grad.addColorStop(0, 'rgba(0,0,0,0.85)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(camera.x, 0, 1920, 220);
-
-    // Ceiling beam overlay for extra interior depth
-    ctx.save();
-    const beamY = 80;
-    ctx.fillStyle = 'rgba(20, 12, 40, 0.9)';
-    ctx.fillRect(camera.x, beamY, 1920, 32);
-    // beam shading
-    const beamGrad = ctx.createLinearGradient(0, beamY, 0, beamY + 32);
-    beamGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
-    beamGrad.addColorStop(1, 'rgba(255,255,255,0.06)');
-    ctx.fillStyle = beamGrad;
-    ctx.fillRect(camera.x, beamY, 1920, 32);
-    ctx.restore();
-
-    ctx.restore();
-    // --- End drawing the world ---
-
-    // Draw story UI on top if active
-    if (storyMode) {
-        if (dialogueSystem && dialogueSystem.isActive) {
-            dialogueSystem.render(gameWidth, gameHeight);
-        } else if (miniGameSystem && miniGameSystem.isActive) {
-            miniGameSystem.render(gameWidth, gameHeight);
-        }
-    } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
-        // Show interaction prompts
-        interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
-    }
-
-    ctx.restore();
-
-    function drawPlayers() {
-        for (const id in players) {
-            const player = players[id];
-            if (player.character && spriteSheets[player.character]) {
-                const sheet = spriteSheets[player.character];
-                const frameInfo = spriteFrames[player.character];
-                const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
-                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
-                const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
-                const frameX = frame.x * frameInfo.frameWidth;
-
-                const standardHeight = 700; // Increased character size
-                const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
-                const drawHeight = standardHeight;
-                const drawWidth = standardHeight * aspectRatio;
-
-                ctx.save();
-                ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
-                ctx.shadowBlur = 8; // Lower blur for better performance
-                // Draw player sprite here (add your drawing logic as needed)
-                // Example:
-                // ctx.drawImage(sheet, frameX, 0, frameInfo.frameWidth, frameInfo.frameHeight, player.x, player.y, drawWidth, drawHeight);
-                ctx.restore();
-        }
-    }
     // --- WebSocket Connection ---
     async function connectToServer() {
         await preloadAssets();
@@ -504,6 +608,4 @@ document.addEventListener('DOMContentLoaded', () => {
         keys.s = false;
         keys[' '] = false;
     }
-// End of DOMContentLoaded
-}
 });
