@@ -15,6 +15,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const characterPortraits = {};
     const spriteSheets = {};
     const environment = {};
+    
+    // Story system state
+    let dialogueSystem = null;
+    let miniGameSystem = null;
+    let interactionSystem = null;
+    let storyMode = false;
+    let storyTriggered = false;
+    
+    // Puzzle discovery tracking
+    let puzzlesDiscovered = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    let puzzlesCompleted = {
+        jukebox: false,
+        neon_sign: false,
+        kael: false
+    };
+    
+    // Define puzzle element positions and visual properties
+    const puzzleElements = {
+        jukebox: { x: 1400, y: 380, width: 120, height: 200, range: 150 },
+        neon_sign: { x: 750, y: 250, width: 200, height: 100, range: 150 },
+        kael: { x: 400, y: 380, width: 100, height: 150, range: 150 }
+    };
 
     // --- World & Dimensional Standards ---
     const world = {
@@ -33,27 +60,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = { x: 0, y: 0 };
 
     // --- Sprite Sheet Definitions ---
-    // Spritesheet is 1344x768, with 5 frames horizontally (spaced out evenly)
-    const spriteFrames = { synthya: { frameWidth: 268.8, frameHeight: 768 } };
+    // Spritesheet is 1344x768, with 5 frames horizontally
+    // Using integer frame width (268) to prevent bleeding between frames
+    const spriteFrames = { synthya: { frameWidth: 268, frameHeight: 768 } };
     const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
     let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
     // --- Image Preloading ---
     async function preloadAssets() {
         const imageSources = {
-            synthya_sheet: 'assets/images/characters/synthya/synthya_spritesheet.png',
+            synthya_sheet: 'assets/images/characters/synthya/synthya-spritesheet.png',
+            synthya_normal: 'assets/images/characters/synthya/synthya-normal.png',
+            synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
+            synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
+            synthya_surprise: 'assets/images/characters/synthya/synthya-surprise.png',
+            kael_normal: 'assets/images/characters/kael/kael-normal.png',
+            kael_happy: 'assets/images/characters/kael/kael-happy.png',
+            kael_surprise: 'assets/images/characters/kael/kael-surprise.png',
+            kael_think: 'assets/images/characters/kael/kael-think.png',
             bg_far: 'assets/images/backgrounds/bg-far.png',
             bg_middle: 'assets/images/backgrounds/bg-middle.png',
             bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
-            broken_mug: 'assets/images/scenes/thebrokenmug.png'
+            broken_mug: 'assets/images/scenes/thebrokenmug.png',
+            jukebox: 'assets/images/scenes/jukebox.png'
         };
         const promises = Object.entries(imageSources).map(([name, src]) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = src;
                 img.onload = () => {
-                    if (name.startsWith('bg_') || name === 'broken_mug') environment[name] = img;
+                    if (name.startsWith('bg_') || name === 'broken_mug' || name === 'jukebox') environment[name] = img;
                     else if (name.includes('_sheet')) spriteSheets['synthya'] = img;
+                    else if (name.startsWith('synthya_') || name.startsWith('kael_')) characterPortraits[name] = img;
                     resolve();
                 };
                 img.onerror = () => reject(`Failed to load ${src}`);
@@ -132,10 +170,59 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
+        
+        // Handle story mode input
+        if (storyMode) {
+            if (dialogueSystem && dialogueSystem.isActive) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    const result = dialogueSystem.nextDialogue();
+                    if (result === 'end') {
+                        storyMode = false;
+                    }
+                } else if (e.key >= '1' && e.key <= '9') {
+                    const choiceIndex = parseInt(e.key) - 1;
+                    const result = dialogueSystem.selectChoice(choiceIndex);
+                    if (result && result.type === 'minigame') {
+                        miniGameSystem.startGame(result.game);
+                        dialogueSystem.isActive = false;
+                    } else if (result && result.type === 'walk_to_puzzle') {
+                        // Start walking to puzzle location
+                        startWalkToPuzzle(result.nextScene);
+                    }
+                }
+            } else if (miniGameSystem && miniGameSystem.isActive) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    if (miniGameSystem.gameComplete) {
+                        miniGameSystem.endGame();
+                        if (dialogueSystem.currentScene) {
+                            dialogueSystem.isActive = true;
+                        }
+                    }
+                } else {
+                    miniGameSystem.handleInput(e.key);
+                }
+            }
+            return;
+        }
+        
+        // Normal game input
         if (keys[key] !== undefined) keys[key] = true;
         if ((key === 'w' || key === ' ') && isGrounded) { yVelocity = jumpPower; isGrounded = false; }
+        
+        // Trigger story with 'E' key when near the bar
+        if (key === 'e' && !storyTriggered && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            // Check if player is in the bar area (left side of the world)
+            if (player.x < 800) {
+                startStory();
+            }
+        }
     });
-    window.addEventListener('keyup', (e) => { if (keys[e.key.toLowerCase()] !== undefined) keys[e.key.toLowerCase()] = false; });
+    window.addEventListener('keyup', (e) => { 
+        if (storyMode) return; // Don't handle keyup in story mode
+        if (keys[e.key.toLowerCase()] !== undefined) keys[e.key.toLowerCase()] = false; 
+    });
 
     // --- Canvas Resize ---
     function resizeCanvas() {
@@ -145,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function gameLoop() {
         // --- Player Logic ---
-        if (localPlayerId && players[localPlayerId]) {
+        if (!storyMode && localPlayerId && players[localPlayerId]) {
             const player = players[localPlayerId];
             let lastState = { ...player };
             let lastFlip = flipH;
@@ -157,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 600; // Much larger sprite to match background scale
+            const standardHeight = 700; // Increased sprite size
             if (player.y > world.groundLevel - standardHeight) {
                 player.y = world.groundLevel - standardHeight;
                 yVelocity = 0; isGrounded = true;
@@ -169,6 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Camera Follow
             camera.x = player.x - (1920 / 2); // Center on a 1920px view
             camera.x = Math.max(0, Math.min(camera.x, world.width - 1920)); // Clamp to world
+            
+            // Check for interactions
+            if (interactionSystem) {
+                interactionSystem.checkInteractions(player.x, player.y);
+            }
 
             // Network Update
             if (player.x !== lastState.x || player.y !== lastState.y || player.animationState !== lastState.animationState || flipH !== lastFlip) {
@@ -176,6 +268,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     ws.send(JSON.stringify({ type: 'updateState', x: player.x, y: player.y, animationState: player.animationState, flipH: flipH }));
                 }
             }
+        }
+        
+        // Handle walking to puzzle elements during story mode
+        if (storyMode && walkingToPuzzle && localPlayerId && players[localPlayerId]) {
+            const player = players[localPlayerId];
+            const target = puzzleTarget;
+            
+            if (target) {
+                const distance = Math.abs(player.x - target.x);
+                
+                if (distance > 50) {
+                    // Keep walking towards target
+                    if (player.x < target.x) {
+                        player.x += moveSpeed;
+                        flipH = false;
+                    } else {
+                        player.x -= moveSpeed;
+                        flipH = true;
+                    }
+                    player.animationState = 'walking';
+                } else {
+                    // Reached target, start the scene
+                    walkingToPuzzle = false;
+                    player.animationState = 'idle_front';
+                    dialogueSystem.startScene(puzzleTargetScene);
+                    dialogueSystem.isActive = true;
+                    puzzleTarget = null;
+                    puzzleTargetScene = null;
+                }
+            }
+        }
+        
+        // Update story systems
+        if (storyMode) {
+            if (dialogueSystem) dialogueSystem.update();
+            if (miniGameSystem) miniGameSystem.update();
         }
 
         // --- Rendering ---
@@ -214,8 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw Environment
         if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080); // Parallax for far bg
-        // Position the bar scene at the bottom of the 1080px world
-        if (environment.broken_mug) ctx.drawImage(environment.broken_mug, 0, 1080 - 832); // Bar at bottom
+        // Position the bar scene to fill the screen - scale it up and position lower to cover bottom
+        if (environment.broken_mug) {
+            const barWidth = 1920;
+            const barHeight = 1400; // Taller to fill more of the screen
+            const barY = -200; // Position lower so bar fills bottom, only far bg visible at top
+            ctx.drawImage(environment.broken_mug, 0, barY, barWidth, barHeight);
+        }
 
         // Draw Players
         drawPlayers();
@@ -224,6 +357,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         ctx.restore();
         // --- End drawing the world ---
+        
+        // Draw story UI on top if active
+        if (storyMode) {
+            if (dialogueSystem && dialogueSystem.isActive) {
+                dialogueSystem.render(gameWidth, gameHeight);
+            } else if (miniGameSystem && miniGameSystem.isActive) {
+                miniGameSystem.render(gameWidth, gameHeight);
+            }
+        } else if (interactionSystem && localPlayerId && players[localPlayerId]) {
+            // Show interaction prompts
+            interactionSystem.renderPrompt(gameWidth, gameHeight, camera.x, camera.y);
+        }
 
         ctx.restore();
     }
@@ -239,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
                 const frameX = frame.x * frameInfo.frameWidth;
 
-                const standardHeight = 600; // Match the size used in physics
+                const standardHeight = 700; // Increased character size
                 const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
                 const drawHeight = standardHeight;
                 const drawWidth = standardHeight * aspectRatio;
@@ -262,6 +407,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- WebSocket Connection ---
     async function connectToServer() {
         await preloadAssets();
+        
+        // Initialize story systems
+        dialogueSystem = new DialogueSystem(canvas, ctx, synthyaStory);
+        miniGameSystem = new MiniGameSystem(canvas, ctx);
+        interactionSystem = new InteractionSystem(canvas, ctx);
+        
+        // Add interaction points
+        interactionSystem.addInteraction(300, 480, "The bartender seems busy...", () => {
+            startStory();
+        });
+        
+        // Define puzzle element positions in the bar
+        puzzleElements = {
+            jukebox: { x: 1400, y: 480, scene: 'puzzle_jukebox', width: 100, height: 200, range: 50 },
+            sign: { x: 800, y: 480, scene: 'puzzle_sign', width: 80, height: 160, range: 40 },
+            kael: { x: 400, y: 480, scene: 'puzzle_kael_final', width: 90, height: 180, range: 45 }
+        };
+        
         return new Promise((resolve) => {
             ws = new WebSocket('ws://localhost:8080');
             ws.onopen = () => { console.log('[Client] Connected.'); gameLoop(); resolve(); };
@@ -283,5 +446,46 @@ document.addEventListener('DOMContentLoaded', () => {
             ws.onclose = () => console.log('[Client] Disconnected.');
             ws.onerror = (error) => console.error('[Client] WebSocket Error:', error);
         });
+    }
+    
+    // --- Story System Functions ---
+    function startStory() {
+        console.log('Starting Synthya\'s story - Chapter 1: The Memory-Loop!');
+        storyMode = true;
+        storyTriggered = true;
+        
+        // Disable player movement
+        keys.a = false;
+        keys.d = false;
+        keys.w = false;
+        keys.s = false;
+        keys[' '] = false;
+        
+        // Start the archive intro scene
+        dialogueSystem.startScene('archive_intro');
+    }
+    
+    function startWalkToPuzzle(sceneId) {
+        console.log(`Walking to puzzle: ${sceneId}`);
+        
+        // Determine which puzzle element based on scene ID
+        let targetElement = null;
+        if (sceneId === 'puzzle_jukebox') {
+            targetElement = puzzleElements.jukebox;
+        } else if (sceneId === 'puzzle_sign') {
+            targetElement = puzzleElements.neon_sign;
+        } else if (sceneId === 'puzzle_kael_final') {
+            targetElement = puzzleElements.kael;
+        }
+        
+        if (targetElement) {
+            walkingToPuzzle = true;
+            puzzleTarget = targetElement;
+            puzzleTargetScene = sceneId;
+            dialogueSystem.isActive = false; // Hide dialogue while walking
+        } else {
+            // If no walking needed, start scene directly
+            dialogueSystem.startScene(sceneId);
+        }
     }
 });
