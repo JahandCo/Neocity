@@ -4,20 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEOCITY</title>
+    <link rel="icon" href="assets/images/LogoNeocity.png">
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/css/menu.css">
+    <link rel="stylesheet" href="assets/css/character-select.css">
 </head>
 <body>
+    <canvas id="particle-canvas"></canvas>
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="screen">
-        <div class="login-container">
-            <h1 class="game-title">NEOCITY</h1>
-            <p class="logline">A cybertech-inspired multiverse social platform.</p>
-            <button id="enter-grid-btn">Enter The Grid</button>
+        <img src="assets/images/LogoNeocity.png" alt="NEOCITY Logo" class="logo">
+        <h1>NEOCITY</h1>
+        <div class="menu-buttons">
+            <button id="story-btn">Story</button>
+            <button id="sin-chambers-btn">Sin-Chambers</button>
+            <button id="see-the-grid-btn">See the Grid</button>
+            <button id="about-btn">About</button>
         </div>
+        <audio id="menu-audio" src="assets/audio/menu.mp3" loop></audio>
     </div>
 
     <!-- CHARACTER SELECT SCREEN -->
     <div id="character-select-screen" class="screen" style="display: none;">
+        <button id="back-to-menu-btn">Back to Menu</button>
         <h2>Choose Your Echo</h2>
         <div class="character-selection-container">
             <div class="character-grid">
@@ -52,16 +61,14 @@
                 <p>The Ghost Runner</p>
             </div>
             </div>
-            <div class="character-info-panel" id="character-info-panel">
-                <h3 id="info-char-name">Select an Echo</h3>
-                <p id="info-char-desc">Hover over a character to learn more about their abilities</p>
-            </div>
         </div>
     </div>
 
     <!-- GAME APP CONTAINER -->
     <div id="app-container" style="display: none;">
+        <img src="assets/images/LogoNeocity.png" alt="NEOCITY Logo" class="in-game-logo">
         <canvas id="game-canvas"></canvas>
+        <audio id="game-audio" src="assets/audio/game.mp3" loop></audio>
     </div>
 
     <script src="scripts/storyData.js"></script>
@@ -69,5 +76,7 @@
     <script src="scripts/miniGames.js"></script>
     <script src="scripts/interactionSystem.js"></script>
     <script src="scripts/app.js"></script>
+    <script src="scripts/menu.js"></script>
+    <script src="scripts/character-select.js"></script>
 </body>
 </html>
