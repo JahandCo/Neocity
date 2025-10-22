@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If deploying with a separate WebSocket server, update 'window.location.host' to the appropriate host:port.
             // Example: const wsUrl = 'ws://your-websocket-server:port';
                         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                        const wsUrl = `${wsProtocol}//${window.location.host}`;
+                        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
                         ws = new WebSocket(wsUrl);
             ws.onopen = () => { console.log('[Client] Connected.'); gameLoop(); resolve(); };
             ws.onmessage = (event) => {
