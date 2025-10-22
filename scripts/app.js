@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sceneId === 'puzzle_jukebox') {
             targetElement = puzzleElements.jukebox;
         } else if (sceneId === 'puzzle_sign') {
-            targetElement = puzzleElements.sign;
+            targetElement = puzzleElements.neon_sign;
         } else if (sceneId === 'puzzle_kael_final') {
             targetElement = puzzleElements.kael;
         }
