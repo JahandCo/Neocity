@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(animateParticles);
     }
 
-    for(let i = 0; i < 100; i++){
+    for (let i = 0; i < 100; i++) {
         createParticle();
     }
 
