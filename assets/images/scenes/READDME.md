@@ -1,0 +1,1 @@
+I have added new png images to use. background.png will be replacing the in game background, the-broken-mug.png is replacing the current bar image thats set. 

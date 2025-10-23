@@ -5,8 +5,20 @@ const path = require('path');
 
 // Create an HTTP server
 const server = http.createServer((req, res) => {
-    let filePath = '.' + req.url;
-    if (filePath === './') filePath = './index.html';
+    // Prevent directory traversal
+    const publicDirectory = path.resolve(__dirname);
+    const safeUrl = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '');
+    let filePath = path.join(publicDirectory, safeUrl);
+    if (req.url === '/') {
+        filePath = path.join(publicDirectory, 'index.html');
+    }
+
+    // Ensure the resolved path is within the public directory
+    if (!filePath.startsWith(publicDirectory)) {
+        res.writeHead(403, { 'Content-Type': 'text/html' });
+        res.end('<h1>403 Forbidden</h1>', 'utf-8');
+        return;
+    }
 
     const extname = String(path.extname(filePath)).toLowerCase();
     const mimeTypes = {
@@ -78,21 +90,25 @@ wss.on('connection', (ws) => {
 
     // Handle incoming messages from the client
     ws.on('message', (message) => {
-        const data = JSON.parse(message);
-        const playerState = players.get(playerId);
-        if (!playerState) return;
+        try {
+            const data = JSON.parse(message);
+            const playerState = players.get(playerId);
+            if (!playerState) return;
 
-        if (data.type === 'characterSelect') {
-            playerState.character = data.character;
-            console.log(`[Server] Player ${playerId} chose ${data.character}`);
-            broadcastUpdate();
-        }
-        else if (data.type === 'updateState') {
-            playerState.x = data.x;
-            playerState.y = data.y;
-            playerState.animationState = data.animationState;
-            playerState.flipH = data.flipH;
-            broadcastUpdate();
+            if (data.type === 'characterSelect') {
+                playerState.character = data.character;
+                console.log(`[Server] Player ${playerId} chose ${data.character}`);
+                broadcastUpdate();
+            }
+            else if (data.type === 'updateState') {
+                playerState.x = data.x;
+                playerState.y = data.y;
+                playerState.animationState = data.animationState;
+                playerState.flipH = data.flipH;
+                broadcastUpdate();
+            }
+        } catch (error) {
+            console.error(`[Server] Failed to parse message from ${playerId}:`, message, error);
         }
     });
 

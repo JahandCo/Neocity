@@ -52,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const world = {
         width: 3840, // The width of our explorable level
         height: 1080, // Our target resolution height
-        groundLevel: 1080 - 70,
+        // Align player feet with the bar floor (tuned to thebar image draw at y=-200, h=1400)
+        groundLevel: 860,
     };
 
     // --- Physics & Camera ---
@@ -65,30 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = { x: 0, y: 0 };
 
     // --- Sprite Sheet Definitions ---
-    // Spritesheet is 1344x768, with 5 frames horizontally
-    // Using integer frame width (268) to prevent bleeding between frames
-    const spriteFrames = { synthya: { frameWidth: 268, frameHeight: 768 } };
-    const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 }, action: { x: 4 } };
+    const spriteFrames = { synthya: { frameWidth: 362, frameHeight: 535 } };
+    const synthyaFrames = { idle_front: { x: 0 }, walk_1: { x: 1 }, walk_2: { x: 2 }, walk_3: { x: 3 } };
     let animationFrame = 0, frameCounter = 0, frameSpeed = 6;
 
     // --- Image Preloading ---
     async function preloadAssets() {
         const imageSources = {
-            synthya_sheet: 'assets/images/characters/synthya/synthya-spritesheet.png',
-            synthya_normal: 'assets/images/characters/synthya/synthya-normal.png',
-            synthya_happy: 'assets/images/characters/synthya/synthya-happy.png',
-            synthya_sad: 'assets/images/characters/synthya/synthya-sad.png',
-            synthya_surprise: 'assets/images/characters/synthya/synthya-surprise.png',
-            kael_normal: 'assets/images/characters/kael/kael-normal.png',
-            kael_happy: 'assets/images/characters/kael/kael-happy.png',
-            kael_surprise: 'assets/images/characters/kael/kael-surprise.png',
-            kael_think: 'assets/images/characters/kael/kael-think.png',
-            bg_far: 'assets/images/backgrounds/bg-far.png',
-            bg_middle: 'assets/images/backgrounds/bg-middle.png',
-            bg_foreground: 'assets/images/backgrounds/bg-foreground.png',
-            broken_mug: 'assets/images/scenes/thebrokenmug.png',
-            jukebox: 'assets/images/scenes/jukebox.png',
-            neon_sign: 'assets/images/scenes/neon-sign.svg'
+            synthya_sheet: '../assets/images/characters/synthya/synthya-spritesheet.png',
+            synthya_normal: '../assets/images/characters/synthya/synthya-normal.png',
+            synthya_happy: '../assets/images/characters/synthya/synthya-happy.png',
+            synthya_sad: '../assets/images/characters/synthya/synthya-sad.png',
+            synthya_surprise: '../assets/images/characters/synthya/synthya-surprise.png',
+            kael_normal: '../assets/images/characters/kael/kael-normal.png',
+            kael_happy: '../assets/images/characters/kael/kael-happy.png',
+            kael_surprise: '../assets/images/characters/kael/kael-surprise.png',
+            kael_think: '../assets/images/characters/kael/kael-think.png',
+            bg_far: '../assets/images/backgrounds/bg-far.png',
+            bg_middle: '../assets/images/backgrounds/bg-middle.png',
+            bg_foreground: '../assets/images/backgrounds/bg-foreground.png',
+            broken_mug: '../assets/images/scenes/thebrokenmug.png',
+            jukebox: '../assets/images/scenes/jukebox.png',
+            neon_sign: '../assets/images/scenes/neon-sign.svg'
         };
         const promises = Object.entries(imageSources).map(([name, src]) => {
             return new Promise((resolve, reject) => {
@@ -224,14 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Physics
             yVelocity += gravity;
             player.y += yVelocity;
-            const standardHeight = 700;
-            if (player.y > world.groundLevel - standardHeight) {
-                player.y = world.groundLevel - standardHeight;
+            const playerHeight = 535; // Match sprite frame height
+            if (player.y > world.groundLevel - playerHeight) {
+                player.y = world.groundLevel - playerHeight;
                 yVelocity = 0; isGrounded = true;
             }
 
             // Animation
-            if (isGrounded) { player.animationState = (keys.a || keys.d) ? 'walking' : 'idle_front'; } else { player.animationState = 'action'; }
+            if (isGrounded) { player.animationState = (keys.a || keys.d) ? 'walking' : 'idle_front'; } else { player.animationState = 'idle_front'; } // Use idle for jump/fall
 
             // Camera Follow
             camera.x = player.x - (1920 / 2);
@@ -289,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Animation Frame Update
         frameCounter++;
-        if (frameCounter >= frameSpeed) { frameCounter = 0; animationFrame = (animationFrame + 1) % 3; }
+        if (frameCounter >= frameSpeed) { frameCounter = 0; animationFrame = (animationFrame + 1) % 3; } // Cycle through 3 walk frames
 
         requestAnimationFrame(gameLoop);
     }
@@ -314,16 +313,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
 
-        // --- Draw the world from the camera's perspective ---
-        ctx.save();
-        ctx.translate(-camera.x, -camera.y);
+    // --- Draw the world from the camera's perspective ---
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
 
-        // --- Draw the world from the camera's perspective ---
-        ctx.save();
-        ctx.translate(-camera.x, -camera.y);
-
-        // Draw Environment
+        // Draw Environment (parallax background layers)
         if (environment.bg_far) ctx.drawImage(environment.bg_far, camera.x * 0.8, 0, 1920, 1080);
+        if (environment.bg_middle) ctx.drawImage(environment.bg_middle, camera.x * 0.9, 0, 1920, 1080);
         if (environment.broken_mug) {
             const barWidth = 1920;
             const barHeight = 1400;
@@ -343,30 +339,38 @@ document.addEventListener('DOMContentLoaded', () => {
             interactionSystem.renderChatBubble(player.x, player.y, 'Find the anomalies', 0, -140);
         }
 
-        if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
+    if (environment.bg_foreground) ctx.drawImage(environment.bg_foreground, 0, 0);
+
+    // World-space floor occluder to ensure no city background peeks through beneath the bar
+    ctx.save();
+    ctx.fillStyle = 'rgba(5, 5, 15, 0.92)';
+    ctx.fillRect(camera.x, 900, 1920, 300);
+    ctx.restore();
+
+    // Finish world drawing
+    ctx.restore();
+    // --- End drawing the world ---
         
+        // Screen-space overlays (do not move with camera)
         // Subtle top vignette to reinforce "inside the bar" and hide any stray gaps
         const grad = ctx.createLinearGradient(0, 0, 0, 220);
         grad.addColorStop(0, 'rgba(0,0,0,0.85)');
         grad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grad;
-        ctx.fillRect(camera.x, 0, 1920, 220);
+        ctx.fillRect(0, 0, gameWidth, 220);
 
         // Ceiling beam overlay for extra interior depth
         ctx.save();
         const beamY = 80;
         ctx.fillStyle = 'rgba(20, 12, 40, 0.9)';
-        ctx.fillRect(camera.x, beamY, 1920, 32);
+        ctx.fillRect(0, beamY, gameWidth, 32);
         const beamGrad = ctx.createLinearGradient(0, beamY, 0, beamY + 32);
         beamGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
         beamGrad.addColorStop(1, 'rgba(255,255,255,0.06)');
         ctx.fillStyle = beamGrad;
-        ctx.fillRect(camera.x, beamY, 1920, 32);
+        ctx.fillRect(0, beamY, gameWidth, 32);
         ctx.restore();
-        
-        ctx.restore();
-        // --- End drawing the world ---
-        
+
         // Draw story UI on top if active
         if (storyMode) {
             if (dialogueSystem && dialogueSystem.isActive) {
@@ -389,14 +393,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sheet = spriteSheets[player.character];
                 const frameInfo = spriteFrames[player.character];
                 const walkCycle = ['walk_1', 'walk_2', 'walk_3'];
-                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : player.animationState;
+                const frameKey = player.animationState === 'walking' ? walkCycle[animationFrame] : 'idle_front';
                 const frame = synthyaFrames[frameKey] || synthyaFrames['idle_front'];
                 const frameX = frame.x * frameInfo.frameWidth;
 
-                const standardHeight = 700;
-                const aspectRatio = frameInfo.frameWidth / frameInfo.frameHeight;
-                const drawHeight = standardHeight;
-                const drawWidth = standardHeight * aspectRatio;
+                const drawHeight = frameInfo.frameHeight;
+                const drawWidth = frameInfo.frameWidth;
 
                 ctx.save();
                 ctx.shadowColor = (id === localPlayerId) ? '#00ffff' : '#ff00ff';
@@ -490,51 +492,68 @@ document.addEventListener('DOMContentLoaded', () => {
         await preloadAssets();
         
     // Initialize story systems
-            ctx.save();
-            // Ambient cue halo when searching for anomalies
-            if (window.searchModeActive) {
-                ctx.fillStyle = `rgba(0, 255, 255, ${0.12 + pulse * 0.15})`;
-                ctx.beginPath();
-                ctx.ellipse(j.x + j.width/2, j.y - j.height/2, j.width*0.8, j.height*0.7, 0, 0, Math.PI*2);
-        // Patch startScene to track scene transitions and update puzzle flags
-        const originalStartScene = dialogueSystem.startScene.bind(dialogueSystem);
-        window.searchModeActive = false;
-        dialogueSystem.startScene = (sceneId) => {
-            originalStartScene(sceneId);
-            // Update discovery/completion flags based on scene transitions
-            if (sceneId === 'puzzle_jukebox') {
-                puzzlesDiscovered.jukebox = true;
-            } else if (sceneId === 'puzzle_sign') {
-                puzzlesDiscovered.neon_sign = true;
-            } else if (sceneId === 'jukebox_solved') {
-                puzzlesCompleted.jukebox = true;
-            } else if (sceneId === 'sign_solved') {
-                puzzlesCompleted.neon_sign = true;
-            } else if (sceneId === 'puzzle_kael_final') {
-                puzzlesDiscovered.kael = true;
-            }
-            // Toggle free-roam search mode
-            if (sceneId === 'escape_room_hub' || sceneId === 'escape_room_hub_2') {
-                // End of overlay after these scenes will drop back to free roam
-                window.searchModeActive = true;
-            } else if (sceneId === 'puzzle_jukebox' || sceneId === 'puzzle_sign' || sceneId === 'puzzle_kael_final') {
-                window.searchModeActive = false;
-            }
-        };
-                    storyTriggered = true;
-                    dialogueSystem.startScene('broken_mug_loop_start');
-                } else if (puzzlesCompleted.jukebox && puzzlesCompleted.neon_sign) {
-                    dialogueSystem.startScene('puzzle_kael_final');
-                } else {
-                    dialogueSystem.startScene('puzzle_kael_talk');
-                }
-        return new Promise((resolve) => {
-            // The following WebSocket URL assumes the WebSocket server runs on the same host and port as the web server.
-            // If deploying with a separate WebSocket server, update 'window.location.host' to the appropriate host:port.
-            // Example: const wsUrl = 'ws://your-websocket-server:port';
-                        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-                        ws = new WebSocket(wsUrl);
+    dialogueSystem = new DialogueSystem(canvas, ctx, synthyaStory);
+    miniGameSystem = new MiniGameSystem(canvas, ctx);
+    interactionSystem = new InteractionSystem(canvas, ctx);
+
+    // Patch startScene to track scene transitions and update puzzle flags
+    const originalStartScene = dialogueSystem.startScene.bind(dialogueSystem);
+    window.searchModeActive = false;
+    dialogueSystem.startScene = (sceneId) => {
+        originalStartScene(sceneId);
+        // Update discovery/completion flags based on scene transitions
+        if (sceneId === 'puzzle_jukebox') {
+            puzzlesDiscovered.jukebox = true;
+        } else if (sceneId === 'puzzle_sign') {
+            puzzlesDiscovered.neon_sign = true;
+        } else if (sceneId === 'jukebox_solved') {
+            puzzlesCompleted.jukebox = true;
+        } else if (sceneId === 'sign_solved') {
+            puzzlesCompleted.neon_sign = true;
+        } else if (sceneId === 'puzzle_kael_final') {
+            puzzlesDiscovered.kael = true;
+        }
+        // Toggle free-roam search mode
+        if (sceneId === 'escape_room_hub' || sceneId === 'escape_room_hub_2') {
+            // End of overlay after these scenes will drop back to free roam
+            window.searchModeActive = true;
+        } else if (sceneId === 'puzzle_jukebox' || sceneId === 'puzzle_sign' || sceneId === 'puzzle_kael_final') {
+            window.searchModeActive = false;
+        }
+    };
+
+    // --- Add Interaction Hotspots ---
+    // Bartender (Kael)
+    interactionSystem.addInteraction(puzzleElements.kael.x, puzzleElements.kael.y, "Talk to Kael", () => {
+        ensureStoryMode();
+        if (!storyTriggered) {
+            storyTriggered = true;
+            dialogueSystem.startScene('broken_mug_loop_start');
+        } else if (puzzlesCompleted.jukebox && puzzlesCompleted.neon_sign) {
+            dialogueSystem.startScene('puzzle_kael_final');
+        } else {
+            dialogueSystem.startScene('puzzle_kael_talk');
+        }
+    });
+    // Jukebox
+    interactionSystem.addInteraction(puzzleElements.jukebox.x, puzzleElements.jukebox.y, "Investigate Jukebox", () => {
+        ensureStoryMode();
+        dialogueSystem.startScene('puzzle_jukebox');
+    });
+    // Neon Sign
+    interactionSystem.addInteraction(puzzleElements.neon_sign.x, puzzleElements.neon_sign.y, "Inspect Neon Sign", () => {
+        ensureStoryMode();
+        dialogueSystem.startScene('puzzle_sign');
+    });
+
+
+    return new Promise((resolve) => {
+        // The following WebSocket URL assumes the WebSocket server runs on the same host and port as the web server.
+        // If deploying with a separate WebSocket server, update 'window.location.host' to the appropriate host:port.
+        // Example: const wsUrl = 'ws://your-websocket-server:port';
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+                    ws = new WebSocket(wsUrl);
             ws.onopen = () => { console.log('[Client] Connected.'); gameLoop(); resolve(); };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);

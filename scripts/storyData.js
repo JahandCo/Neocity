@@ -797,25 +797,25 @@ const synthyaStory = {
         synthya: {
             name: "Synthya",
             images: {
-                normal: "assets/images/characters/synthya/synthya-normal.png",
-                happy: "assets/images/characters/synthya/synthya-happy.png",
-                sad: "assets/images/characters/synthya/synthya-sad.png",
-                surprise: "assets/images/characters/synthya/synthya-surprise.png"
+                normal: "../assets/images/characters/synthya/synthya-normal.png",
+                happy: "../assets/images/characters/synthya/synthya-happy.png",
+                sad: "../assets/images/characters/synthya/synthya-sad.png",
+                surprise: "../assets/images/characters/synthya/synthya-surprise.png"
             }
         },
         kael: {
             name: "Kael",
             images: {
-                normal: "assets/images/characters/kael/kael-normal.png",
-                happy: "assets/images/characters/kael/kael-happy.png",
-                surprise: "assets/images/characters/kael/kael-surprise.png",
-                think: "assets/images/characters/kael/kael-think.png"
+                normal: "../assets/images/characters/kael/kael-normal.png",
+                happy: "../assets/images/characters/kael/kael-happy.png",
+                surprise: "../assets/images/characters/kael/kael-surprise.png",
+                think: "../assets/images/characters/kael/kael-think.png"
             }
         },
         bartender: {
             name: "Bartender",
             images: {
-                normal: "assets/images/characters/synthya/synthya.png" // Placeholder
+                normal: "../assets/images/characters/synthya/synthya.png" // Placeholder
             }
         }
     },

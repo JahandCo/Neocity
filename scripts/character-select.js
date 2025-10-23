@@ -14,9 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     backToMenuBtn.addEventListener('click', () => {
         charSelectScreen.style.display = 'none';
         loginScreen.style.display = 'flex';
-        // Show particle canvas again
+        // Show particle canvas again and restart animation
         const particleCanvas = document.getElementById('particle-canvas');
-        if (particleCanvas) particleCanvas.style.display = 'block';
+        if (particleCanvas) {
+            particleCanvas.style.display = 'block';
+            // Assuming menu.js exposes a function to start the animation
+            if (window.startParticleAnimation) {
+                window.startParticleAnimation();
+            }
+        }
     });
 
     charCards.forEach(card => {
